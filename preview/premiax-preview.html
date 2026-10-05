@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PREMIAX-UHO — Vista previa</title>
+<style>
+:root{--blue:#003366;--blue2:#1A5276;--gold:#C9A227;--gold-lt:#F5E9C4;--light:#EAF1FA;--pale:#F4F7FB;--text:#1A2332;--muted:#6B7A8D;--border:#D4DCE8;--success:#1A7F4B;--warn:#B7770D;--danger:#C0392B;--r:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--pale);color:var(--text);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+/* Login */
+#login{min-height:100vh;background:linear-gradient(135deg,#001F4D,#003366,#1A5276);display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#fff;border-radius:16px;padding:32px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.logo{font-family:Georgia,serif;font-weight:900;color:var(--blue);font-size:1.7rem;text-align:center}
+.logo span{color:var(--gold)}
+.sub{text-align:center;color:var(--muted);font-size:.85rem;margin:4px 0 20px}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.fg label{font-size:.8rem;font-weight:600}
+.fc{border:1.5px solid var(--border);border-radius:7px;padding:9px 11px;font-size:.9rem;width:100%;max-width:100%;background:#fff;min-height:44px}
+.btn{background:var(--blue);color:#fff;border:none;border-radius:7px;padding:10px 16px;font-weight:600;font-size:.88rem;min-height:44px}
+.btn:hover{background:var(--blue2)}
+.btn-s{background:#fff;color:var(--blue);border:1.5px solid var(--border);border-radius:7px;padding:8px 14px;font-weight:600;font-size:.85rem;min-height:40px}
+.btn-ok{background:var(--success);color:#fff;border:none;border-radius:7px;padding:8px 14px;font-weight:600;font-size:.85rem;min-height:40px}
+.btn-d{background:var(--danger);color:#fff;border:none;border-radius:7px;padding:8px 14px;font-weight:600;font-size:.85rem;min-height:40px}
+.btn-block{width:100%}
+.hint{font-size:.75rem;color:var(--muted);margin-top:12px;text-align:center}
+/* Layout */
+#app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.sb{background:var(--blue);color:#fff;padding:18px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-br{padding:0 18px 14px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:8px}
+.sb-br .n{font-family:Georgia,serif;font-weight:700;font-size:1.05rem}
+.sb-br .r{font-size:.72rem;color:rgba(255,255,255,.55);margin-top:2px}
+.sbs{font-size:.66rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.35);padding:12px 18px 4px}
+.sbi{display:flex;gap:9px;align-items:center;padding:9px 18px;color:rgba(255,255,255,.75);font-size:.87rem;border-left:3px solid transparent;cursor:pointer;min-height:40px}
+.sbi:hover,.sbi.on{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--gold)}
+.badge-n{margin-left:auto;background:var(--gold);color:var(--blue);font-size:.66rem;font-weight:700;padding:1px 7px;border-radius:10px}
+.main{min-width:0}
+.topbar{display:none;background:var(--blue);color:#fff;padding:0 14px;height:52px;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.ham{background:none;border:none;color:#fff;font-size:1.4rem;min-width:44px;min-height:44px}
+.ph{background:#fff;padding:18px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ph h2{font-size:1.15rem;color:var(--blue)}
+.ph .s{font-size:.8rem;color:var(--muted)}
+.ha{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ca{padding:22px 26px}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow-x:auto}
+.ch{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ch h3{font-size:.92rem;color:var(--blue)}
+.cb{padding:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.kg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden}
+.kc::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:var(--blue)}
+.kc.go::before{background:var(--gold)}.kc.gr::before{background:var(--success)}.kc.re::before{background:var(--danger)}
+.kv{font-size:1.8rem;font-weight:700;color:var(--blue)}
+.kl{font-size:.76rem;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.84rem;min-width:520px}
+th{background:var(--pale);color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left;border-bottom:2px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr.clk{cursor:pointer}tr.clk:hover td{background:#F8FAFD}
+.bg{display:inline-block;padding:3px 9px;border-radius:10px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.b-bl{background:var(--light);color:var(--blue)}.b-gr{background:#D5F0E3;color:var(--success)}.b-wn{background:#FEF3CD;color:var(--warn)}.b-gy{background:#EDF1F7;color:var(--muted)}.b-re{background:#FDDEDD;color:var(--danger)}.b-go{background:var(--gold-lt);color:var(--warn)}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.tab{padding:9px 16px;color:var(--muted);font-weight:600;font-size:.86rem;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;min-height:44px;white-space:nowrap}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.al{background:#FEF9E7;border:1px solid #F9E79F;color:#7D6608;border-radius:var(--r);padding:11px 14px;margin-bottom:14px;font-size:.86rem}
+.al.info{background:#EBF5FB;border-color:#AED6F1;color:#1A5276}
+.hl{padding:10px 0 10px 16px;border-left:2px solid var(--border);margin-left:8px;position:relative;font-size:.84rem}
+.hl::before{content:"";position:absolute;left:-6px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--gold)}
+.hl small{color:var(--muted);display:block}
+.modal{position:fixed;inset:0;background:rgba(0,20,40,.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:14px}
+.modal-box{background:#fff;border-radius:var(--r);width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;padding:12px 18px;border-radius:8px;z-index:300;font-size:.85rem;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.lnav{background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;height:56px;gap:20px;position:sticky;top:0;z-index:40}
+.hero{background:linear-gradient(135deg,#001F4D,#003366 50%,#1A5276);color:#fff;text-align:center;padding:64px 24px}
+.hero h1{font-family:Georgia,serif;font-size:clamp(1.9rem,6vw,3rem);line-height:1.15;margin-bottom:12px}
+.hero h1 span{color:var(--gold)}
+.hero p{opacity:.8;max-width:600px;margin:0 auto 26px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.ccard{background:#fff;border-radius:var(--r);padding:18px;border-top:4px solid var(--blue);box-shadow:0 2px 10px rgba(0,51,102,.07)}
+.ccard li{font-size:.84rem;margin:6px 0 0 16px}
+.tl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tli{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center}
+.tli.act{border-color:var(--gold);background:var(--gold-lt)}
+.tli.done{opacity:.7}
+.sec{padding:40px 24px}
+.sec h2{font-family:Georgia,serif;color:var(--blue);font-size:clamp(1.3rem,4vw,1.75rem);margin-bottom:6px}
+.sec p.s{color:var(--muted);margin-bottom:20px}
+.steps{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.step{flex:1;min-width:110px;text-align:center;font-size:.78rem;color:var(--muted);padding:8px;border-bottom:3px solid var(--border)}
+.step.on{color:var(--blue);font-weight:700;border-bottom-color:var(--blue)}
+.step.ok{color:var(--success);border-bottom-color:var(--success)}
+footer{background:var(--blue);color:rgba(255,255,255,.65);text-align:center;padding:20px;font-size:.8rem}
+/* Responsive */
+@media (max-width:1023px){
+  #app{grid-template-columns:1fr}
+  .sb{position:fixed;left:0;top:0;width:min(280px,84vw);height:100vh;transform:translateX(-100%);transition:transform .25s;z-index:120}
+  .sb.open{transform:none;box-shadow:4px 0 24px rgba(0,0,0,.3)}
+  .scrim{display:none}.scrim.open{display:block;position:fixed;inset:0;background:rgba(0,20,40,.5);z-index:110}
+  .topbar{display:flex}
+  .g3{grid-template-columns:1fr 1fr}
+  .kg{grid-template-columns:1fr 1fr}
+  .g2{grid-template-columns:1fr}
+  .lnav-links{display:none}
+}
+@media (max-width:639px){
+  .g3,.kg{grid-template-columns:1fr}
+  .ph{padding:14px 16px}.ca{padding:16px}
+  .ha{width:100%}
+  .ha .fc,.ha select{flex:1 1 140px}
+  .lnav{padding:0 14px;gap:10px}
+  .modal-box{max-width:100%;max-height:100%;height:100%;border-radius:0}
+  .modal{padding:0}
+}
+.lnav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;font-weight:500}
+.lnav-links a:hover{color:var(--blue)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="login">
+  <div class="login-box">
+    <div class="logo">PREMIAX<span>·UHO</span></div>
+    <div class="sub">Sistema de Premios del Rector · UHO</div>
+    <div class="al info">Simulación de AGA_AUTH. Elige un rol para entrar a la vista previa.</div>
+    <div class="fg"><label>Usuario (rol)</label>
+      <select class="fc" id="loginUser"></select>
+    </div>
+    <div class="fg"><label>Contraseña</label><input class="fc" type="password" value="Premiax2025!"></div>
+    <button class="btn btn-block" onclick="doLogin()">🔐 Iniciar sesión</button>
+    <div class="hint">Vista previa con datos de ejemplo. Los cambios no se guardan al recargar.</div>
+    <div style="text-align:center;margin-top:14px"><button class="btn-s" onclick="showLanding()">← Ver landing pública</button></div>
+  </div>
+</div>
+
+<!-- ═══════════ LANDING ═══════════ -->
+<div id="landing" class="hidden">
+  <nav class="lnav">
+    <div style="font-family:Georgia,serif;font-weight:900;color:var(--blue)">PREMIAX<span style="color:var(--gold)">·UHO</span></div>
+    <div class="lnav-links" style="display:flex;gap:18px"><a href="#reglamento">Reglamento</a><a href="#premios">Premios</a><a href="#galardonados">Galardonados</a><a href="#calendario">Calendario</a></div>
+    <div style="margin-left:auto;display:flex;gap:8px"><button class="btn-s" onclick="showLogin()">Ingresar</button><button class="btn" onclick="showLogin()">🏆 Proponer</button></div>
+  </nav>
+  <section class="hero">
+    <div style="display:inline-block;background:rgba(201,162,39,.2);border:1px solid rgba(201,162,39,.5);color:var(--gold);font-size:11px;padding:4px 14px;border-radius:20px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px">✦ Convocatoria 2026 — Activa</div>
+    <h1>Premios del <span>Rector</span><br>Universidad de Holguín</h1>
+    <p>Reconocemos la excelencia académica, científica y laboral de la comunidad universitaria.</p>
+    <button class="btn" style="background:var(--gold);color:var(--blue);padding:12px 26px" onclick="showLogin()">🏆 Presentar propuesta</button>
+  </section>
+  <section class="sec" id="reglamento" style="background:#fff">
+    <h2>📋 Reglamento</h2><p class="s">Principios y procedimiento del Sistema de Incentivos y Premiaciones.</p>
+    <div class="g3">
+      <div class="card"><div class="cb"><div style="font-size:1.4rem">🎯</div><b style="color:var(--blue)">Principios fundamentales</b><p style="color:var(--muted);font-size:.84rem;margin-top:6px">Reconocimiento del mérito y la dedicación de los trabajadores universitarios.</p></div></div>
+      <div class="card"><div class="cb"><div style="font-size:1.4rem">🏅</div><b style="color:var(--blue)">Niveles de incentivos</b><p style="color:var(--muted);font-size:.84rem;margin-top:6px">Premios individuales y colectivos, docentes y no docentes.</p></div></div>
+      <div class="card"><div class="cb"><div style="font-size:1.4rem">📑</div><b style="color:var(--blue)">Procedimiento</b><p style="color:var(--muted);font-size:.84rem;margin-top:6px">Desde propuestas de departamento hasta la aprobación por Rectoría.</p></div></div>
+    </div>
+  </section>
+  <section class="sec" id="premios"><h2>🏆 Categorías de premios</h2><p class="s">Premios disponibles por categoría y criterios de selección.</p><div class="cgrid" id="landingCats"></div></section>
+  <section class="sec" id="calendario" style="background:#fff"><h2>📅 Calendario 2026</h2><p class="s">Estado de las etapas del proceso.</p><div class="tl" id="landingCal"></div></section>
+  <section class="sec" id="galardonados"><h2>🎖️ Galardonados 2025</h2><p class="s">Premiados del año anterior.</p><div class="g3" id="landingWin"></div></section>
+  <footer>PREMIAX-UHO · Universidad de Holguín © 2026</footer>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="app" class="hidden">
+  <div class="scrim" id="scrim" onclick="toggleMenu(false)"></div>
+  <aside class="sb" id="sidebar"></aside>
+  <div class="main">
+    <div class="topbar"><button class="ham" onclick="toggleMenu(true)" aria-label="Menú">☰</button><b style="font-family:Georgia,serif">PREMIAX·UHO</b></div>
+    <div id="view"></div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+/* ───────── Datos de ejemplo ───────── */
+const ROLES = {
+  superadmin:{label:'Superadmin',nombre:'Carlos Pérez González',area:'Dirección de Recursos Humanos'},
+  admin:{label:'Admin',nombre:'María Rodríguez López',area:'Facultad de Informática'},
+  gestor_global:{label:'Gestor Global',nombre:'Juan Pablo Martínez',area:'VRRPA'},
+  jefe_comision:{label:'Jefe de Comisión',nombre:'Raúl Fuentes',area:'VRRPA · Formación de Pregrado'},
+  jefe_area:{label:'Jefe de Área',nombre:'Ana García Ruiz',area:'Facultad de Agronomía'},
+  jefe_departamento:{label:'Jefe de Departamento',nombre:'Luis Torres Mora',area:'Facultad de Agronomía · Biología'},
+  usuario:{label:'Usuario',nombre:'Rosa Medina Pérez',area:'Facultad de Informática · Ing. de Software'}
+};
+const RANK=['superadmin','admin','gestor_global','jefe_comision','jefe_area','jefe_departamento','usuario'];
+const can=(rol)=>RANK.indexOf(state.rol)!==-1 && RANK.indexOf(state.rol)<=RANK.indexOf(rol);
+
+const PREMIOS=[
+ {id:1,nombre:'Mejor profesor integralmente',cat:'Individuales Docentes',criterios:'Resultados docentes, científicos e integrales.',premios:10,recon:1},
+ {id:2,nombre:'Mejor profesor joven (≤35 años)',cat:'Individuales Docentes',criterios:'Desempeño destacado en los primeros años.',premios:3,recon:1},
+ {id:3,nombre:'Mejor profesor guía',cat:'Individuales Docentes',criterios:'Resultados como guía de grupo y participación extracurricular.',premios:3,recon:1},
+ {id:4,nombre:'Mejor trabajador no docente',cat:'Individuales No Docentes',criterios:'Desempeño ejemplar en funciones no docentes.',premios:5,recon:1},
+ {id:5,nombre:'Mejor Departamento docente',cat:'Colectivos Docentes',criterios:'Resultados del colectivo.',premios:1,recon:1},
+ {id:6,nombre:'Mejor Colectivo no docente',cat:'Colectivos No Docentes',criterios:'Desempeño colectivo sobresaliente.',premios:1,recon:1}
+];
+const ETAPAS=[
+ {n:'Convocatoria y propuestas',ini:'2026-09-01',fin:'2026-10-20',resp:'Usuarios',estado:'en_curso'},
+ {n:'Revisión a nivel de departamento',ini:'2026-09-01',fin:'2026-10-20',resp:'Jefes de Departamento',estado:'en_curso'},
+ {n:'Trabajo de comisiones',ini:'2026-10-02',fin:'2026-10-25',resp:'Jefes de Comisión',estado:'en_curso'},
+ {n:'Análisis Comisión Central',ini:'2026-11-01',fin:'2026-11-01',resp:'Gestor Global',estado:'proxima'},
+ {n:'Aprobación Consejo de Dirección',ini:'2026-11-05',fin:'2026-11-15',resp:'Rectorado',estado:'proxima'},
+ {n:'Publicación y entrega de certificados',ini:'2026-11-20',fin:'2026-12-10',resp:'Rectorado',estado:'proxima'}
+];
+const ESTADO={
+ pendiente_departamento:['Pendiente Dpto.','b-gy'],pendiente_area:['Pendiente Área','b-bl'],
+ en_comision:['En Comisión','b-wn'],ganadora_propuesta:['Ganadora propuesta','b-go'],
+ aprobada:['✅ Aprobada','b-gr'],rechazada:['✗ Rechazada','b-re']
+};
+let PROPUESTAS=[
+ {id:1,cand:'Rosa Medina Pérez',premio:3,area:'Facultad de Informática',dpto:'Ingeniería de Software',creador:'Rosa Medina Pérez',estado:'pendiente_departamento',nivel:'departamento',comision:null,resumen:'Resultados como profesora a tiempo parcial durante el curso.',historial:[['Rosa Medina Pérez','Creación de propuesta','2026-09-28 10:15']]},
+ {id:2,cand:'Luis Torres Mora',premio:2,area:'Facultad de Agronomía',dpto:'Biología',creador:'Luis Torres Mora',estado:'pendiente_area',nivel:'area',comision:null,resumen:'Desempeño docente y científico en sus primeros años de carrera.',historial:[['Luis Torres Mora','Creación de propuesta','2026-09-20 09:00'],['Luis Torres Mora','Elevar a Área','2026-09-22 14:30']]},
+ {id:3,cand:'Ana García Ruiz',premio:3,area:'Facultad de Agronomía',dpto:'Biología',creador:'Ana García Ruiz',estado:'en_comision',nivel:'comision',comision:'Formación de Pregrado',resumen:'Excelente labor como guía, con alto índice de retención.',historial:[['Ana García Ruiz','Creación de propuesta','2026-09-18 11:00'],['Ana García Ruiz','Elevar a Área','2026-09-19 09:00'],['Ana García Ruiz','Elevar a comisión','2026-09-21 16:00']]},
+ {id:4,cand:'Pedro Gómez Castro',premio:3,area:'Facultad de Informática',dpto:'Ingeniería de Software',creador:'Ana García Ruiz',estado:'en_comision',nivel:'comision',comision:'Formación de Pregrado',resumen:'Coordinación de proyectos de formación y tutorías.',historial:[['Ana García Ruiz','Creación de propuesta','2026-09-18 12:00'],['Ana García Ruiz','Elevar a comisión','2026-09-21 16:10']]},
+ {id:5,cand:'Departamento de Matemática',premio:5,area:'Facultad de Informática',dpto:'Matemática',creador:'María Rodríguez López',estado:'aprobada',nivel:'comision',comision:'Integrales y Gestión',resumen:'Resultados metodológicos e indicadores de calidad.',historial:[['María Rodríguez López','Creación de propuesta','2026-08-30 10:00'],['Víctor Pérez Díaz','Propuesta de ganador','2026-09-10 12:00'],['Juan Pablo Martínez','Aprobación final','2026-09-12 09:00']]}
+];
+const COMISIONES=[
+ {id:1,nombre:'Integrales y Gestión',jefe:'Víctor Pérez Díaz',miembros:['Pedro Gómez Castro','Carlos López Peña'],premios:['Mejor profesor integralmente','Mejor Departamento docente']},
+ {id:2,nombre:'Formación de Pregrado',jefe:'Raúl Fuentes',miembros:['Ana García Ruiz','Luis Torres Mora','Pedro Gómez Castro'],premios:['Mejor profesor joven (≤35 años)','Mejor profesor guía']}
+];
+const USUARIOS=[
+ ['Carlos Pérez González','superadmin','Dirección de RRHH'],['María Rodríguez López','admin','Facultad de Informática'],
+ ['Juan Pablo Martínez','gestor_global','VRRPA'],['Raúl Fuentes','jefe_comision','VRRPA'],['Ana García Ruiz','jefe_area','Facultad de Agronomía'],
+ ['Luis Torres Mora','jefe_departamento','Facultad de Agronomía'],['Rosa Medina Pérez','usuario','Facultad de Informática']
+];
+const GANADORES=[
+ {n:'María Rodríguez López',area:'Facultad de Informática',p:'Mejor profesor integralmente'},
+ {n:'Juan Pablo Martínez',area:'VRRPA',p:'Mejor profesor joven (≤35 años)'},
+ {n:'Facultad de Agronomía',area:'Colectivo',p:'Mejor Facultad integralmente'},
+ {n:'Ana García Ruiz',area:'FUM Moa',p:'Mejor profesor guía'}
+];
+
+/* ───────── Estado ───────── */
+const state={rol:null,page:'dashboard',sel:null,menuOpen:false,tab:'todas'};
+let nextId=10;
+
+/* ───────── Utilidades ───────── */
+const $=(id)=>document.getElementById(id);
+const esc=(s)=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function badge(e){const[l,c]=ESTADO[e]||['—','b-gy'];return `<span class="bg ${c}">${l}</span>`}
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;$('toastRoot').appendChild(t);setTimeout(()=>t.remove(),2400)}
+function hist(p,accion){p.historial.push([ROLES[state.rol].nombre,accion,new Date().toISOString().slice(0,16).replace('T',' ')])}
+
+/* ───────── Navegación entre vistas públicas / app ───────── */
+function show(id){['login','landing','app'].forEach(x=>$(x).classList.toggle('hidden',x!==id))}
+function showLogin(){show('login')}
+function showLanding(){show('landing');renderLanding()}
+function doLogin(){state.rol=$('loginUser').value;state.page='dashboard';show('app');renderApp();window.scrollTo(0,0)}
+function logout(){state.rol=null;show('login')}
+function toggleMenu(open){state.menuOpen=open;$('sidebar').classList.toggle('open',open);$('scrim').classList.toggle('open',open)}
+function go(page,sel){state.page=page;state.sel=sel??null;toggleMenu(false);renderApp();window.scrollTo(0,0)}
+
+/* ───────── Menú lateral según rol ───────── */
+function renderSidebar(){
+  const item=(page,icon,label,min,extra='')=>can(min)?`<div class="sbi ${state.page===page?'on':''}" onclick="go('${page}')"><span>${icon}</span>${label}${extra}</div>`:'';
+  const pendientes=PROPUESTAS.filter(p=>p.estado!=='aprobada'&&p.estado!=='rechazada').length;
+  $('sidebar').innerHTML=`
+    <div class="sb-br"><div class="n">PREMIAX·UHO</div><div class="r">${ROLES[state.rol].label} · ${ROLES[state.rol].nombre}</div></div>
+    <div class="sbs">Principal</div>
+    ${item('dashboard','📊','Dashboard','usuario')}
+    ${item('propuestas','📝','Propuestas','usuario','<span class="badge-n">'+pendientes+'</span>')}
+    ${item('comisiones','🏛️','Comisiones','miembro_comision')}
+    <div class="sbs">Administración</div>
+    ${item('usuarios','👥','Usuarios y Roles','admin')}
+    ${item('premios','🏆','Categorías y Premios','admin')}
+    ${item('etapas','📅','Etapas del Proceso','admin')}
+    <div class="sbs">Reportes</div>
+    ${item('aprobacion','✅','Aprobación Final','gestor_global')}
+    ${item('estadisticas','📈','Estadísticas','gestor_global')}
+    <div class="sbs">Cuenta</div>
+    <div class="sbi" onclick="showLanding()"><span>🌐</span>Ver landing</div>
+    <div class="sbi" onclick="logout()"><span>🚪</span>Cerrar sesión</div>`;
+}
+
+/* ───────── Vistas ───────── */
+const VIEWS={
+ dashboard(){
+  const total=PROPUESTAS.length,ev=PROPUESTAS.filter(p=>p.estado!=='pendiente_departamento'&&p.estado!=='pendiente_area').length;
+  return `
+  <div class="ph"><div><h2>Dashboard Principal</h2><div class="s">Etapa activa: Trabajo de comisiones · quedan 20 días</div></div>
+    <div class="ha"><button class="btn-s" onclick="go('propuestas')">+ Nueva propuesta</button></div></div>
+  <div class="ca">
+    <div class="al">⚠️ <b>Trabajo de comisiones</b> cierra el <b>25 oct 2026</b>.</div>
+    <div class="kg">
+      <div class="kc"><div class="kv">${total}</div><div class="kl">Propuestas recibidas</div></div>
+      <div class="kc go"><div class="kv">${COMISIONES.length}</div><div class="kl">Comisiones activas</div></div>
+      <div class="kc gr"><div class="kv">${ev}</div><div class="kl">Propuestas evaluadas</div></div>
+      <div class="kc re"><div class="kv">20</div><div class="kl">Días restantes</div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ch"><h3>Últimas propuestas</h3><button class="btn-s" style="margin-left:auto" onclick="go('propuestas')">Ver todas →</button></div>
+        <table><thead><tr><th>Candidato</th><th>Premio</th><th>Estado</th></tr></thead><tbody>
+        ${PROPUESTAS.slice(0,4).map(p=>`<tr class="clk" onclick="go('detalle',${p.id})"><td><b>${esc(p.cand)}</b></td><td>${esc(PREMIOS.find(x=>x.id===p.premio).nombre)}</td><td>${badge(p.estado)}</td></tr>`).join('')}
+        </tbody></table></div>
+      <div class="card"><div class="ch"><h3>Estado de comisiones</h3></div><div class="cb">
+        ${COMISIONES.map((c,i)=>{const pct=[67,33][i]||50;return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:.84rem"><b>${esc(c.nombre)}</b><span style="color:var(--muted)">${pct}%</span></div><div style="background:var(--border);height:7px;border-radius:6px;margin-top:5px"><div style="background:var(--blue);height:100%;width:${pct}%;border-radius:6px"></div></div></div>`}).join('')}
+      </div></div>
+    </div>
+  </div>`},
+
+ propuestas(){
+  const visibles=PROPUESTAS.filter(p=>{
+    if(can('gestor_global'))return true;
+    if(state.rol==='jefe_area')return p.area==='Facultad de Agronomía';
+    if(state.rol==='jefe_departamento')return p.dpto==='Biología';
+    if(state.rol==='jefe_comision')return p.comision==='Formación de Pregrado';
+    return p.creador===ROLES[state.rol].nombre;
+  });
+  const tabs=[['todas','Todas'],['pendiente_departamento','Pendientes Dpto.'],['en_comision','En Comisión'],['aprobada','Aprobadas']];
+  const lista=visibles.filter(p=>state.tab==='todas'||p.estado===state.tab);
+  return `
+  <div class="ph"><div><h2>Propuestas de premios</h2><div class="s">Visibles según tu rol (${ROLES[state.rol].label})</div></div>
+    <div class="ha"><button class="btn" onclick="openNueva()">+ Nueva</button></div></div>
+  <div class="ca">
+    <div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${state.tab===k?'on':''}" onclick="state.tab='${k}';renderApp()">${l}</button>`).join('')}</div>
+    <div class="card"><table><thead><tr><th>Candidato</th><th>Premio</th><th>Estado</th><th>Acción</th></tr></thead><tbody>
+      ${lista.length?lista.map(p=>`<tr class="clk" onclick="go('detalle',${p.id})"><td><b>${esc(p.cand)}</b><div style="font-size:.76rem;color:var(--muted)">${esc(p.dpto)}</div></td><td>${esc(PREMIOS.find(x=>x.id===p.premio).nombre)}</td><td>${badge(p.estado)}</td><td><button class="btn-s" onclick="event.stopPropagation();go('detalle',${p.id})">Ver →</button></td></tr>`).join(''):`<tr><td colspan="4" style="color:var(--muted)">No hay propuestas para este filtro.</td></tr>`}
+    </tbody></table></div>
+  </div>`},
+
+ detalle(){
+  const p=PROPUESTAS.find(x=>x.id===state.sel);
+  if(!p)return '<div class="ca">Propuesta no encontrada.</div>';
+  const acciones=[];
+  if(p.estado==='pendiente_departamento'&&(state.rol==='jefe_departamento'||can('gestor_global')))acciones.push(`<button class="btn" onclick="elevar(${p.id})">↑ Elevar a Área</button>`);
+  if(p.estado==='pendiente_area'&&(state.rol==='jefe_area'||can('gestor_global')))acciones.push(`<button class="btn" onclick="elevar(${p.id})">↑ Elevar a Comisión</button>`);
+  if(p.estado==='en_comision'&&(state.rol==='jefe_comision'||can('gestor_global')))acciones.push(`<button class="btn" onclick="proponer(${p.id})">🏆 Proponer como ganador</button>`);
+  if(p.estado==='ganadora_propuesta'&&can('gestor_global')){acciones.push(`<button class="btn-ok" onclick="aprobar(${p.id})">✅ Aprobar</button>`,`<button class="btn-d" onclick="rechazar(${p.id})">✗ Rechazar</button>`)}
+  return `
+  <div class="ph"><div><div style="font-size:.78rem;color:var(--muted);margin-bottom:4px"><a href="#" onclick="event.preventDefault();go('propuestas')" style="color:var(--blue)">Propuestas</a> › Detalle #${p.id}</div>
+    <h2>${esc(PREMIOS.find(x=>x.id===p.premio).nombre)}</h2><div class="s">${esc(p.cand)} · ${esc(p.area)}</div></div>
+    <div class="ha">${badge(p.estado)}</div></div>
+  <div class="ca"><div class="g2">
+    <div>
+      <div class="card"><div class="ch"><h3>👤 Candidato</h3></div><div class="cb">
+        <b style="font-size:1rem">${esc(p.cand)}</b><div style="color:var(--muted);font-size:.84rem">${esc(p.area)} · ${esc(p.dpto)}</div>
+        <p style="margin-top:12px;font-size:.88rem">${esc(p.resumen)}</p>
+        ${p.comision?`<p style="margin-top:10px;font-size:.84rem"><b>Comisión:</b> ${esc(p.comision)}</p>`:''}
+      </div></div>
+      <div class="card"><div class="ch"><h3>⚙️ Acciones</h3></div><div class="cb" style="display:flex;gap:8px;flex-wrap:wrap">
+        ${acciones.length?acciones.join(''):'<span style="color:var(--muted);font-size:.84rem">No hay acciones disponibles para tu rol en este estado.</span>'}
+      </div></div>
+    </div>
+    <div class="card"><div class="ch"><h3>📜 Historial</h3></div><div class="cb">
+      ${p.historial.map(([u,a,f])=>`<div class="hl"><b>${esc(a)}</b><small>${esc(u)} · ${f}</small></div>`).join('')}
+    </div></div>
+  </div></div>`},
+
+ comisiones(){
+  const mias=COMISIONES.filter(c=>state.rol==='gestor_global'||state.rol==='admin'||c.jefe.includes(ROLES[state.rol].nombre.split(' ')[0])||c.miembros.includes(ROLES[state.rol].nombre));
+  const lista=(state.rol==='gestor_global'||state.rol==='admin')?COMISIONES:mias;
+  return `
+  <div class="ph"><div><h2>${can('gestor_global')?'Gestión de comisiones':'Mis comisiones'}</h2><div class="s">${lista.length} comisiones</div></div></div>
+  <div class="ca"><div class="g2">
+    ${lista.map(c=>`<div class="card"><div class="ch" style="background:var(--light)"><div><h3>${esc(c.nombre)}</h3><div style="font-size:.78rem;color:var(--muted)">Dirige: ${esc(c.jefe)}</div></div></div>
+      <div class="cb"><div style="font-size:.76rem;color:var(--muted);font-weight:600;margin-bottom:6px">MIEMBROS (${c.miembros.length})</div>
+        <div style="font-size:.84rem;margin-bottom:12px">${c.miembros.map(esc).join(' · ')}</div>
+        <div style="font-size:.76rem;color:var(--muted);font-weight:600;margin-bottom:6px">PREMIOS (${c.premios.length})</div>
+        <div style="font-size:.84rem">${c.premios.map(esc).join(' · ')}</div>
+      </div></div>`).join('')||'<div class="card cb">No perteneces a ninguna comisión.</div>'}
+  </div></div>`},
+
+ usuarios(){
+  return `
+  <div class="ph"><div><h2>Usuarios y Roles</h2><div class="s">${USUARIOS.length} usuarios registrados</div></div></div>
+  <div class="ca"><div class="card"><table><thead><tr><th>Usuario</th><th>Área</th><th>Rol</th><th>Acción</th></tr></thead><tbody>
+  ${USUARIOS.map(([n,r,a],i)=>`<tr><td><b>${esc(n)}</b></td><td>${esc(a)}</td><td><span class="bg b-bl">${ROLES[r].label}</span></td><td><button class="btn-s" onclick="cambiarRol(${i})">Editar rol</button></td></tr>`).join('')}
+  </tbody></table></div></div>`},
+
+ premios(){
+  const cats=[...new Set(PREMIOS.map(p=>p.cat))];
+  return `
+  <div class="ph"><div><h2>Categorías y premios</h2><div class="s">Define los premios y sus criterios</div></div></div>
+  <div class="ca">${cats.map(c=>`<div class="card"><div class="ch" style="background:var(--light)"><h3>${esc(c)}</h3></div>
+    <table><thead><tr><th>Premio</th><th>Premios</th><th>Reconoc.</th></tr></thead><tbody>
+    ${PREMIOS.filter(p=>p.cat===c).map(p=>`<tr><td><b>${esc(p.nombre)}</b><div style="font-size:.76rem;color:var(--muted)">${esc(p.criterios)}</div></td><td>${p.premios}</td><td>${p.recon}</td></tr>`).join('')}
+    </tbody></table></div>`).join('')}</div>`},
+
+ etapas(){
+  return `
+  <div class="ph"><div><h2>Etapas del proceso</h2><div class="s">Proceso 2026 — ${ETAPAS.length} etapas</div></div></div>
+  <div class="ca"><div class="card"><table><thead><tr><th>Etapa</th><th>Inicio</th><th>Cierre</th><th>Responsable</th><th>Estado</th></tr></thead><tbody>
+  ${ETAPAS.map(e=>`<tr><td><b>${esc(e.n)}</b></td><td>${e.ini}</td><td>${e.fin}</td><td>${esc(e.resp)}</td><td>${badge(e.estado==='en_curso'?'en_curso':e.estado==='proxima'?'pendiente_departamento':'aprobada').replace('Pendiente Dpto.','Próxima').replace('En Comisión','▶ En curso').replace('✅ Aprobada','Finalizada')}</td></tr>`).join('')}
+  </tbody></table></div></div>`},
+
+ aprobacion(){
+  const pend=PROPUESTAS.filter(p=>p.estado==='ganadora_propuesta');
+  return `
+  <div class="ph"><div><h2>Aprobación final de ganadores</h2><div class="s">Revisar y aprobar propuestas de comisiones</div></div></div>
+  <div class="ca"><div class="card"><table><thead><tr><th>Candidato</th><th>Premio</th><th>Comisión</th><th>Decisión</th></tr></thead><tbody>
+  ${pend.length?pend.map(p=>`<tr><td><b>${esc(p.cand)}</b></td><td>${esc(PREMIOS.find(x=>x.id===p.premio).nombre)}</td><td>${esc(p.comision||'—')}</td><td><button class="btn-ok" onclick="aprobar(${p.id})">✅</button> <button class="btn-d" onclick="rechazar(${p.id})">✗</button></td></tr>`).join(''):`<tr><td colspan="4" style="color:var(--muted)">No hay ganadores propuestos pendientes.</td></tr>`}
+  </tbody></table></div></div>`},
+
+ estadisticas(){
+  const porArea={};PROPUESTAS.forEach(p=>porArea[p.area]=(porArea[p.area]||0)+1);
+  const max=Math.max(1,...Object.values(porArea));
+  return `
+  <div class="ph"><div><h2>Dashboard estadístico</h2><div class="s">Proceso de premiación 2026</div></div></div>
+  <div class="ca">
+    <div class="kg">
+      <div class="kc"><div class="kv">${PROPUESTAS.length}</div><div class="kl">Total propuestas</div></div>
+      <div class="kc go"><div class="kv">${PROPUESTAS.filter(p=>p.estado==='en_comision').length}</div><div class="kl">En comisión</div></div>
+      <div class="kc gr"><div class="kv">${PROPUESTAS.filter(p=>p.estado==='aprobada').length}</div><div class="kl">Aprobadas</div></div>
+      <div class="kc re"><div class="kv">${Object.keys(porArea).length}</div><div class="kl">Áreas participantes</div></div>
+    </div>
+    <div class="card"><div class="ch"><h3>Propuestas por área</h3></div><div class="cb">
+      ${Object.entries(porArea).map(([a,n])=>`<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;font-size:.82rem"><div style="width:180px;text-align:right;color:var(--muted)">${esc(a)}</div><div style="flex:1;background:var(--border);border-radius:4px;height:18px"><div style="width:${n/max*100}%;height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:4px;color:#fff;font-size:.7rem;padding-left:6px;line-height:18px">${n}</div></div></div>`).join('')}
+    </div></div>
+  </div>`},
+};
+
+/* ───────── Acciones de flujo ───────── */
+function elevar(id){const p=PROPUESTAS.find(x=>x.id===id);
+  if(p.estado==='pendiente_departamento'){p.estado='pendiente_area';p.nivel='area';hist(p,'Elevar a Área');toast('Propuesta elevada al Jefe de Área')}
+  else if(p.estado==='pendiente_area'){p.estado='en_comision';p.nivel='comision';p.comision='Formación de Pregrado';hist(p,'Elevar a comisión');toast('Asignada a la comisión')}
+  renderApp()}
+function proponer(id){const p=PROPUESTAS.find(x=>x.id===id);
+  modal(`<div class="ch"><h3>Proponer ganador</h3><button class="btn-s" style="margin-left:auto" onclick="closeModal()">✕</button></div>
+  <div class="cb"><p style="font-size:.86rem;margin-bottom:12px">Candidato: <b>${esc(p.cand)}</b></p>
+  <div class="fg"><label>Selección</label><select class="fc" id="selG"><option value="premio">🏆 Premio</option><option value="reconocimiento">⭐ Reconocimiento</option></select></div>
+  <div class="fg"><label>Fundamentación</label><textarea class="fc" id="fund" rows="3"></textarea></div>
+  <button class="btn btn-block" onclick="confirmarGanador(${id})">Enviar propuesta de ganador</button></div>`)}
+function confirmarGanador(id){const p=PROPUESTAS.find(x=>x.id===id);
+  p.estado='ganadora_propuesta';p.seleccion=$('selG').value;hist(p,'Propuesta de ganador');closeModal();toast('Enviada a aprobación final');renderApp()}
+function aprobar(id){const p=PROPUESTAS.find(x=>x.id===id);p.estado='aprobada';hist(p,'Aprobación final');toast('Ganador aprobado y publicado');renderApp()}
+function rechazar(id){const p=PROPUESTAS.find(x=>x.id===id);p.estado='rechazada';hist(p,'Rechazo');toast('Propuesta rechazada');renderApp()}
+function cambiarRol(i){const u=USUARIOS[i];
+  modal(`<div class="ch"><h3>Editar rol: ${esc(u[0])}</h3><button class="btn-s" style="margin-left:auto" onclick="closeModal()">✕</button></div>
+  <div class="cb"><div class="fg"><label>Rol</label><select class="fc" id="rolSel">${RANK.map(r=>`<option value="${r}" ${r===u[1]?'selected':''}>${ROLES[r].label}</option>`).join('')}</select></div>
+  <button class="btn btn-block" onclick="guardarRol(${i})">Guardar</button></div>`)}
+function guardarRol(i){USUARIOS[i][1]=$('rolSel').value;closeModal();toast('Rol actualizado');renderApp()}
+function openNueva(){
+  modal(`<div class="ch"><h3>Nueva propuesta</h3><button class="btn-s" style="margin-left:auto" onclick="closeModal()">✕</button></div>
+  <div class="cb"><div class="fg"><label>Premio</label><select class="fc" id="nPremio">${PREMIOS.map(p=>`<option value="${p.id}">${esc(p.nombre)}</option>`).join('')}</select></div>
+  <div class="fg"><label>Candidato</label><input class="fc" id="nCand" value="${esc(ROLES[state.rol].nombre)}"></div>
+  <div class="fg"><label>Resumen</label><textarea class="fc" id="nRes" rows="3"></textarea></div>
+  <button class="btn btn-block" onclick="crearPropuesta()">📤 Enviar propuesta</button></div>`)}
+function crearPropuesta(){
+  const cand=$('nCand').value.trim(),res=$('nRes').value.trim();
+  if(!cand||!res){toast('Completa candidato y resumen');return}
+  const p={id:nextId++,cand,premio:+$('nPremio').value,area:'Facultad de Informática',dpto:'Ingeniería de Software',creador:ROLES[state.rol].nombre,estado:'pendiente_departamento',nivel:'departamento',comision:null,resumen:res,historial:[]};
+  hist(p,'Creación de propuesta');PROPUESTAS.unshift(p);closeModal();toast('Propuesta enviada');renderApp()}
+function modal(html){$('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-box">${html}</div></div>`}
+function closeModal(){$('modalRoot').innerHTML=''}
+
+/* ───────── Render ───────── */
+function renderApp(){
+  renderSidebar();
+  const v=VIEWS[state.page]||VIEWS.dashboard;
+  $('view').innerHTML=v();
+}
+function renderLanding(){
+  $('landingCats').innerHTML=[...new Set(PREMIOS.map(p=>p.cat))].map(c=>`<div class="ccard"><b style="color:var(--blue)">${esc(c)}</b><ul style="list-style:none;padding:0;margin-top:8px">${PREMIOS.filter(p=>p.cat===c).map(p=>`<li style="font-size:.84rem;margin:6px 0 0 0">▪ ${esc(p.nombre)}</li>`).join('')}</ul></div>`).join('');
+  $('landingCal').innerHTML=ETAPAS.map(e=>`<div class="tli ${e.estado==='en_curso'?'act':e.estado==='finalizada'?'done':''}"><b style="font-size:.84rem">${esc(e.n)}</b><div style="font-size:.76rem;color:var(--muted);margin-top:4px">${e.fin}</div><div style="font-size:.72rem;font-weight:700;margin-top:6px">${e.estado==='en_curso'?'▶ En curso':'Próxima'}</div></div>`).join('');
+  $('landingWin').innerHTML=GANADORES.map(g=>`<div class="card"><div class="cb" style="text-align:center"><div style="width:58px;height:58px;border-radius:50%;background:var(--light);color:var(--blue);border:3px solid var(--gold);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-weight:700">${esc(g.n.split(' ').slice(0,2).map(w=>w[0]).join(''))}</div><b>${esc(g.n)}</b><div style="font-size:.78rem;color:var(--muted)">${esc(g.area)}</div><div style="margin-top:8px;font-size:.72rem;background:var(--gold-lt);color:var(--warn);display:inline-block;padding:3px 10px;border-radius:10px">🏆 ${esc(g.p)}</div></div></div>`).join('');
+}
+
+/* ───────── Inicio ───────── */
+$('loginUser').innerHTML=Object.entries(ROLES).map(([k,v])=>`<option value="${k}">${v.label} — ${v.nombre}</option>`).join('');
+show('login');
+</script>
+</body>
+</html>
