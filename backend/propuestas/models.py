@@ -39,6 +39,7 @@ class Propuesta(models.Model):
     )
     fundamentacion_comision = models.TextField(blank=True)
 
+    version = models.PositiveIntegerField(default=1)
     anio = models.PositiveIntegerField(default=timezone.now().year)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -65,3 +66,21 @@ class HistorialPropuesta(models.Model):
 
     def __str__(self):
         return f'{self.accion} - {self.propuesta}'
+
+
+class VersionPropuesta(models.Model):
+    """Copia de cada versión de la propuesta (RF-018): quién, cuándo y con qué contenido/documento."""
+    propuesta = models.ForeignKey(Propuesta, on_delete=models.CASCADE, related_name='versiones')
+    version = models.PositiveIntegerField()
+    usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.SET_NULL, null=True)
+    candidato_nombre = models.CharField(max_length=250)
+    resumen = models.TextField()
+    documento = models.FileField(upload_to='fundamentaciones/versiones/', null=True, blank=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['version']
+        unique_together = ('propuesta', 'version')
+
+    def __str__(self):
+        return f'{self.propuesta_id} v{self.version}'

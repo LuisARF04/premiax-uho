@@ -14,6 +14,7 @@ export default function Landing() {
   const [anios, setAnios] = useState([]);
   const [anioSel, setAnioSel] = useState(null);
   const [convocatoriaActiva, setConvocatoriaActiva] = useState(false);
+  const [reglamento, setReglamento] = useState(null);
   // Exclusivo para mostrar/ocultar el menú desplegable en móvil (Drawer); el punto de
   // corte real de cuándo aparece el botón lo decide la media query en index.css.
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -21,6 +22,7 @@ export default function Landing() {
   useEffect(() => {
     api.get('/publico/categorias/').then((r) => setCategorias(r.data));
     api.get('/publico/calendario/').then((r) => setCalendario(r.data));
+    api.get('/publico/reglamento/').then((r) => setReglamento(r.data)).catch(() => setReglamento([]));
     api.get('/publico/convocatoria-activa/').then((r) => setConvocatoriaActiva(r.data.convocatoria_activa));
     api.get('/publico/ganadores/anios/').then((r) => {
       setAnios(r.data);
@@ -70,23 +72,18 @@ export default function Landing() {
       <section className="sec wh" id="reglamento">
         <div className="sec-ttl">📋 Reglamento del Sistema</div>
         <div className="sec-sub">Principios y procedimiento del Sistema de Incentivos y Premiaciones de la UHO.</div>
-        <div className="g3">
-          <div style={{ background: 'var(--pale)', borderRadius: 'var(--r)', padding: 20, borderLeft: '4px solid var(--blue)' }}>
-            <div style={{ fontSize: '1.4rem', marginBottom: 8 }}>🎯</div>
-            <div style={{ fontWeight: 700, color: 'var(--blue)', marginBottom: 6 }}>Principios Fundamentales</div>
-            <div style={{ fontSize: '.84rem', color: 'var(--muted)', lineHeight: 1.7 }}>Reconocimiento del mérito, la excelencia y la dedicación de los trabajadores universitarios en todas sus dimensiones.</div>
+        {!reglamento ? <Loading /> : (
+          <div className="g3">
+            {reglamento.map((sec, i) => (
+              <div key={sec.id} style={{ background: 'var(--pale)', borderRadius: 'var(--r)', padding: 20, borderLeft: `4px solid ${['var(--blue)', 'var(--gold)', 'var(--success)'][i % 3]}` }}>
+                <div style={{ fontSize: '1.4rem', marginBottom: 8 }}>{sec.icono}</div>
+                <div style={{ fontWeight: 700, color: 'var(--blue)', marginBottom: 6 }}>{sec.titulo}</div>
+                <div style={{ fontSize: '.84rem', color: 'var(--muted)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{sec.contenido}</div>
+              </div>
+            ))}
+            {!reglamento.length && <div className="tm">El reglamento aún no ha sido publicado.</div>}
           </div>
-          <div style={{ background: 'var(--pale)', borderRadius: 'var(--r)', padding: 20, borderLeft: '4px solid var(--gold)' }}>
-            <div style={{ fontSize: '1.4rem', marginBottom: 8 }}>🏅</div>
-            <div style={{ fontWeight: 700, color: 'var(--blue)', marginBottom: 6 }}>Niveles de Incentivos</div>
-            <div style={{ fontSize: '.84rem', color: 'var(--muted)', lineHeight: 1.7 }}>Premios individuales y colectivos, docentes y no docentes, con reconocimientos en diferentes categorías.</div>
-          </div>
-          <div style={{ background: 'var(--pale)', borderRadius: 'var(--r)', padding: 20, borderLeft: '4px solid var(--success)' }}>
-            <div style={{ fontSize: '1.4rem', marginBottom: 8 }}>📑</div>
-            <div style={{ fontWeight: 700, color: 'var(--blue)', marginBottom: 6 }}>Procedimiento de Selección</div>
-            <div style={{ fontSize: '.84rem', color: 'var(--muted)', lineHeight: 1.7 }}>Proceso transparente desde propuestas de departamento, hasta aprobación por la Rectoría y el Consejo de Dirección.</div>
-          </div>
-        </div>
+        )}
       </section>
 
       <section className="sec alt" id="calendario">

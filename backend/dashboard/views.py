@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db.models import Count
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
@@ -6,15 +8,20 @@ from rest_framework.response import Response
 
 from comisiones.models import Comision
 from ganadores.models import Ganador
+from notificaciones.utils import procesar_etapas
 from organizacion.models import Area
 from premios.models import CategoriaPremio, EtapaProceso
 from propuestas.models import EstadoPropuesta, Propuesta
-from usuarios.permissions import IsGestorGlobal
+from usuarios.models import Rol, Usuario
+from usuarios.permissions import IsJefeComision
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard_principal_view(request):
+    # Sin Celery: aprovechamos la consulta del dashboard para emitir los avisos de etapa pendientes (RF-025).
+    procesar_etapas()
+
     hoy = timezone.now().date()
     etapa_activa = EtapaProceso.objects.filter(fecha_inicio__lte=hoy, fecha_cierre__gte=hoy).order_by('orden').first()
     dias_restantes = (etapa_activa.fecha_cierre - hoy).days if etapa_activa else None
@@ -59,9 +66,13 @@ def dashboard_principal_view(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsGestorGlobal])
+@permission_classes([IsJefeComision])
 def dashboard_estadisticas_view(request):
-    anio = request.query_params.get('anio', timezone.now().year)
+    """RF-027: métricas para admin, gestor global y jefe de comisión."""
+    try:
+        anio = int(request.query_params.get('anio', timezone.now().year))
+    except ValueError:
+        anio = timezone.now().year
     propuestas_anio = Propuesta.objects.filter(anio=anio)
 
     por_area = list(
@@ -71,14 +82,50 @@ def dashboard_estadisticas_view(request):
         propuestas_anio.values('premio__categoria__nombre', 'premio__categoria__tipo')
         .annotate(total=Count('id')).order_by('-total')
     )
+    por_premio = list(
+        propuestas_anio.values('premio__nombre', 'premio__categoria__nombre')
+        .annotate(total=Count('id')).order_by('-total')
+    )
+    por_departamento = list(
+        propuestas_anio.exclude(departamento=None)
+        .values('departamento__nombre', 'departamento__area__nombre')
+        .annotate(total=Count('id')).order_by('-total')[:10]
+    )
     ganadores_por_categoria = list(
         Ganador.objects.filter(anio=anio).values('premio__categoria__nombre').annotate(total=Count('id')).order_by('-total')
     )
-    areas_totales = Area.objects.filter(activo=True).count()
-    areas_con_propuesta = propuestas_anio.exclude(area=None).values('area').distinct().count()
+    ganadores_por_anio = list(
+        Ganador.objects.values('anio', 'premio__categoria__nombre').annotate(total=Count('id')).order_by('anio', 'premio__categoria__nombre')
+    )
+
+    # Estado del proceso por área: ¿enviaron propuestas o no?
+    areas_con = {r['area_id'] for r in propuestas_anio.exclude(area=None).values('area_id').distinct()}
+    areas_activas = list(Area.objects.filter(activo=True).values('id', 'nombre'))
+    estado_por_area = sorted(
+        ({'area': a['nombre'], 'envio': a['id'] in areas_con,
+          'propuestas': next((r['total'] for r in por_area if r['area__nombre'] == a['nombre']), 0)} for a in areas_activas),
+        key=lambda a: (a['envio'], a['area']),
+    )
+    areas_totales = len(areas_activas)
+    areas_con_propuesta = sum(1 for a in estado_por_area if a['envio'])
+
+    # Participación de usuarios y roles.
+    hace_7_dias = timezone.now() - timedelta(days=7)
+    proponentes = set(propuestas_anio.values_list('creado_por_id', flat=True))
+    participacion = []
+    for rol, nombre in Rol.choices:
+        usuarios = Usuario.objects.filter(activo=True, is_active=True, rol=rol)
+        total = usuarios.count()
+        if not total:
+            continue
+        participacion.append({
+            'rol': nombre, 'total': total,
+            'con_propuestas': usuarios.filter(id__in=proponentes).count(),
+            'activos_7_dias': usuarios.filter(last_login__gte=hace_7_dias).count(),
+        })
 
     return Response({
-        'anio': int(anio),
+        'anio': anio,
         'total_propuestas': propuestas_anio.count(),
         'total_ganadores_propuestos': propuestas_anio.filter(estado=EstadoPropuesta.GANADORA_PROPUESTA).count(),
         'total_aprobados': Ganador.objects.filter(anio=anio).count(),
@@ -86,5 +133,11 @@ def dashboard_estadisticas_view(request):
         'areas_sin_propuesta': max(areas_totales - areas_con_propuesta, 0),
         'propuestas_por_area': por_area,
         'propuestas_por_categoria': por_categoria,
+        'propuestas_por_premio': por_premio,
+        'propuestas_por_departamento': por_departamento,
+        'estado_por_area': estado_por_area,
+        'participacion_roles': participacion,
         'ganadores_por_categoria': ganadores_por_categoria,
+        'ganadores_por_anio': ganadores_por_anio,
+        'actualizado': timezone.now().isoformat(),
     })

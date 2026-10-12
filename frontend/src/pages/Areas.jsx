@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
+import { mensajeError } from '../api/errores';
 import { PageHeader, Loading, Modal } from '../components/ui';
 
 export default function Areas() {
@@ -9,6 +10,7 @@ export default function Areas() {
   const [modalArea, setModalArea] = useState(null);
   const [modalDepto, setModalDepto] = useState(null);
   const [error, setError] = useState('');
+  const [resultadoImport, setResultadoImport] = useState(null);
 
   function cargar() {
     api.get('/areas/', { params: { page_size: 100 } }).then((r) => setAreas(r.data.results || r.data));
@@ -31,10 +33,29 @@ export default function Areas() {
     } catch (err) { setError('No se pudo guardar el área.'); }
   }
 
-  async function eliminarArea(a) {
-    if (!confirm(`¿Eliminar el área "${a.nombre}"? Esta acción no se puede deshacer.`)) return;
-    await api.delete(`/areas/${a.id}/`);
+  // RF-012: si hay usuarios/departamentos asociados el servidor responde 409 y se pide confirmación explícita.
+  async function eliminarConAdvertencia(ruta, mensajeInicial) {
+    if (!confirm(mensajeInicial)) return;
+    try {
+      await api.delete(ruta);
+    } catch (err) {
+      if (err.response?.status !== 409) {
+        alert(mensajeError(err, 'No se pudo eliminar.'));
+        return;
+      }
+      if (!confirm(`⚠️ ${err.response.data.detail}\n\n¿Desea eliminarla de todos modos?`)) return;
+      try {
+        await api.delete(ruta, { params: { confirmar: 'true' } });
+      } catch (err2) {
+        alert(mensajeError(err2, 'No se pudo eliminar.'));
+        return;
+      }
+    }
     cargar();
+  }
+
+  function eliminarArea(a) {
+    return eliminarConAdvertencia(`/areas/${a.id}/`, `¿Eliminar el área "${a.nombre}"? Esta acción no se puede deshacer.`);
   }
 
   async function guardarDepto(form) {
@@ -48,25 +69,25 @@ export default function Areas() {
     } catch (err) { setError('No se pudo guardar el departamento.'); }
   }
 
-  async function eliminarDepto(d) {
-    if (!confirm(`¿Eliminar el departamento "${d.nombre}"?`)) return;
-    await api.delete(`/departamentos/${d.id}/`);
-    cargar();
+  function eliminarDepto(d) {
+    return eliminarConAdvertencia(`/departamentos/${d.id}/`, `¿Eliminar el departamento "${d.nombre}"?`);
   }
 
-  async function importarCsv(e) {
+  async function importarArchivo(e) {
     const archivo = e.target.files[0];
+    e.target.value = '';
     if (!archivo) return;
+    setResultadoImport(null);
     const fd = new FormData();
     fd.append('archivo', archivo);
     try {
       const { data } = await api.post('/areas/importar_excel/', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      alert(`Importadas ${data.areas_creadas} áreas y ${data.departamentos_creados} departamentos.`);
+      setResultadoImport({ ok: true, texto: `Importación correcta: ${data.areas_creadas} áreas y ${data.departamentos_creados} departamentos nuevos (${data.filas_procesadas} filas procesadas).` });
       cargar();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Error al importar el archivo.');
+      const d = err.response?.data;
+      setResultadoImport({ ok: false, texto: mensajeError(err, 'Error al importar el archivo.'), errores: d?.errores });
     }
-    e.target.value = '';
   }
 
   return (
@@ -76,13 +97,23 @@ export default function Areas() {
         subtitle="Gestión del organigrama universitario"
         actions={<>
           <label className="bs" style={{ cursor: 'pointer' }}>
-            📥 Importar CSV
-            <input type="file" accept=".csv" hidden onChange={importarCsv} />
+            📥 Importar Excel / CSV
+            <input type="file" accept=".xlsx,.csv" hidden onChange={importarArchivo} />
           </label>
           <button className="bp" onClick={() => (tab === 'areas' ? setModalArea({}) : setModalDepto({}))}>+ Nueva {tab === 'areas' ? 'Área' : 'Departamento'}</button>
         </>}
       />
       <div className="ca">
+        {resultadoImport && (
+          <div className={resultadoImport.ok ? 'al-suc' : 'al-re'}>
+            <span>{resultadoImport.ok ? '✅' : '⚠️'}</span>
+            <div>
+              {resultadoImport.texto}
+              {resultadoImport.errores?.length > 0 && <ul style={{ margin: '6px 0 0 18px' }}>{resultadoImport.errores.map((m) => <li key={m}>{m}</li>)}</ul>}
+              {!resultadoImport.ok && <div className="tsm" style={{ marginTop: 4 }}>El archivo debe tener en la primera fila las columnas «area» y «departamento».</div>}
+            </div>
+          </div>
+        )}
         <div className="tabs">
           <div className={`tab ${tab === 'areas' ? 'on' : ''}`} onClick={() => setTab('areas')}>Áreas ({areas?.length ?? '…'})</div>
           <div className={`tab ${tab === 'deptos' ? 'on' : ''}`} onClick={() => setTab('deptos')}>Departamentos ({departamentos.length})</div>

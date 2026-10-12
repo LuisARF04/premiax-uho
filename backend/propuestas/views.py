@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
@@ -6,13 +7,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from auditoria.utils import registrar
-from comisiones.models import Comision
+from comisiones.models import AsignacionRevision, Comision, MiembroComision
+from comisiones.serializers import AsignacionRevisionSerializer
 from ganadores.models import Ganador
 from notificaciones.utils import notificar
 from usuarios.models import Rol, Usuario
 from usuarios.permissions import hay_privilegio
-from .models import EstadoPropuesta, HistorialPropuesta, NivelPropuesta, Propuesta
-from .serializers import PropuestaCreateSerializer, PropuestaDetalleSerializer, PropuestaListSerializer
+from .models import EstadoPropuesta, HistorialPropuesta, NivelPropuesta, Propuesta, VersionPropuesta
+from .serializers import (
+    PropuestaCreateSerializer, PropuestaDetalleSerializer, PropuestaListSerializer, PropuestaUpdateSerializer,
+)
 
 
 def _historial(propuesta, usuario, accion, descripcion='', nivel_desde='', nivel_hasta=''):
@@ -20,6 +24,30 @@ def _historial(propuesta, usuario, accion, descripcion='', nivel_desde='', nivel
         propuesta=propuesta, usuario=usuario, accion=accion, descripcion=descripcion,
         nivel_desde=nivel_desde, nivel_hasta=nivel_hasta,
     )
+
+
+def _snapshot(propuesta, usuario):
+    """Guarda la versión actual de la propuesta (contenido + documento) en su historial de versiones."""
+    VersionPropuesta.objects.create(
+        propuesta=propuesta, version=propuesta.version, usuario=usuario,
+        candidato_nombre=propuesta.candidato_nombre, resumen=propuesta.resumen,
+        documento=propuesta.documento.name if propuesta.documento else None,
+    )
+
+
+def _puede_editar(usuario, propuesta):
+    """RF-019/020: quién puede modificar o enriquecer una propuesta según su nivel actual."""
+    if propuesta.estado in (EstadoPropuesta.APROBADA, EstadoPropuesta.RECHAZADA):
+        return False
+    if hay_privilegio(usuario, Rol.GESTOR_GLOBAL):
+        return True
+    if propuesta.nivel_actual == NivelPropuesta.DEPARTAMENTO:
+        if propuesta.creado_por_id == usuario.id:
+            return True
+        return usuario.rol == Rol.JEFE_DEPARTAMENTO and propuesta.departamento_id == usuario.departamento_id
+    if propuesta.nivel_actual == NivelPropuesta.AREA:
+        return usuario.rol == Rol.JEFE_AREA and propuesta.area_id == usuario.area_id
+    return False
 
 
 class PropuestaViewSet(viewsets.ModelViewSet):
@@ -34,6 +62,8 @@ class PropuestaViewSet(viewsets.ModelViewSet):
             return PropuestaCreateSerializer
         if self.action in ('list',):
             return PropuestaListSerializer
+        if self.action in ('update', 'partial_update'):
+            return PropuestaUpdateSerializer
         return PropuestaDetalleSerializer
 
     def get_queryset(self):
@@ -45,18 +75,15 @@ class PropuestaViewSet(viewsets.ModelViewSet):
         if hay_privilegio(usuario, Rol.GESTOR_GLOBAL):
             return qs  # admin, superadmin, gestor_global ven todo
 
-        if usuario.rol in (Rol.JEFE_COMISION, Rol.MIEMBRO_COMISION):
-            comisiones_ids = list(usuario.comisiones_dirigidas.values_list('id', flat=True)) + \
-                list(usuario.comisiones_miembro.values_list('comision_id', flat=True))
-            return qs.filter(comision_id__in=comisiones_ids) | qs.filter(creado_por=usuario)
-
-        if usuario.rol == Rol.JEFE_AREA:
-            return qs.filter(area=usuario.area) | qs.filter(creado_por=usuario)
-
-        if usuario.rol == Rol.JEFE_DEPARTAMENTO:
-            return qs.filter(departamento=usuario.departamento) | qs.filter(creado_por=usuario)
-
-        return qs.filter(creado_por=usuario)
+        # Cada usuario ve lo suyo, lo que le asignaron a revisar y lo de su nivel jerárquico (RF-016).
+        filtro = Q(creado_por=usuario) | Q(revisiones__miembro=usuario)
+        if usuario.rol == Rol.JEFE_COMISION:
+            filtro |= Q(comision__in=usuario.comisiones_dirigidas.all())
+        elif usuario.rol == Rol.JEFE_AREA and usuario.area_id:
+            filtro |= Q(area=usuario.area_id)
+        elif usuario.rol == Rol.JEFE_DEPARTAMENTO and usuario.departamento_id:
+            filtro |= Q(departamento=usuario.departamento_id)
+        return qs.filter(filtro).distinct()
 
     def perform_create(self, serializer):
         usuario = self.request.user
@@ -87,16 +114,112 @@ class PropuestaViewSet(viewsets.ModelViewSet):
                     instance.departamento.responsable, 'propuestas', 'Nueva propuesta recibida',
                     f'{usuario.get_full_name()} propuso a {instance.candidato_nombre} para "{premio.nombre}".',
                 )
+        _snapshot(instance, usuario)
         registrar(usuario, 'Crear propuesta', 'propuestas', f'{instance.candidato_nombre} - {premio.nombre}', self.request)
 
-    def perform_update(self, serializer):
+    def update(self, request, *args, **kwargs):
+        """RF-019/020: modificar/enriquecer; cada cambio de contenido o documento genera una nueva versión."""
+        propuesta = self.get_object()
+        if not _puede_editar(request.user, propuesta):
+            return Response({'detail': 'No puedes modificar esta propuesta en su estado o nivel actual.'}, status=403)
+        serializer = PropuestaUpdateSerializer(propuesta, data=request.data, partial=True, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        antes = (propuesta.candidato_nombre, propuesta.candidato_usuario_id, propuesta.resumen,
+                 propuesta.documento.name if propuesta.documento else '')
         instance = serializer.save()
-        _historial(instance, self.request.user, 'Modificación', 'La propuesta fue editada/enriquecida.')
-        registrar(self.request.user, 'Editar propuesta', 'propuestas', str(instance.id), self.request)
+        despues = (instance.candidato_nombre, instance.candidato_usuario_id, instance.resumen,
+                   instance.documento.name if instance.documento else '')
+        if antes != despues:
+            instance.version += 1
+            instance.save(update_fields=['version'])
+            _snapshot(instance, request.user)
+            cambios = []
+            if antes[:2] != despues[:2]:
+                cambios.append('candidato')
+            if antes[2] != despues[2]:
+                cambios.append('descripción')
+            if antes[3] != despues[3]:
+                cambios.append('documento')
+            _historial(instance, request.user, 'Modificación', f'Versión {instance.version}: se actualizó {", ".join(cambios)}.')
+            registrar(request.user, 'Editar propuesta', 'propuestas', f'{instance.id} v{instance.version}', request)
+        return Response(PropuestaDetalleSerializer(instance, context=self.get_serializer_context()).data)
 
     def perform_destroy(self, instance):
         registrar(self.request.user, 'Eliminar propuesta', 'propuestas', str(instance.id), self.request)
         instance.delete()
+
+    def _es_jefe_de_su_comision(self, usuario, propuesta):
+        return bool(propuesta.comision_id and (propuesta.comision.jefe_id == usuario.id or hay_privilegio(usuario, Rol.GESTOR_GLOBAL)))
+
+    @action(detail=True, methods=['post'])
+    def asignar_revision(self, request, pk=None):
+        """RF-016: el jefe de comisión asigna la propuesta a un miembro para su revisión."""
+        propuesta = self.get_object()
+        if not self._es_jefe_de_su_comision(request.user, propuesta):
+            return Response({'detail': 'Solo el jefe de la comisión asignada puede asignar revisiones.'}, status=403)
+        if propuesta.estado != EstadoPropuesta.EN_COMISION:
+            return Response({'detail': 'Solo se pueden asignar revisiones a propuestas en revisión de comisión.'}, status=400)
+        miembro_id = request.data.get('miembro')
+        if not MiembroComision.objects.filter(comision=propuesta.comision, usuario_id=miembro_id).exists():
+            return Response({'detail': 'El usuario no es miembro de esta comisión.'}, status=400)
+        revision, creada = AsignacionRevision.objects.get_or_create(
+            propuesta=propuesta, miembro_id=miembro_id, defaults={'asignado_por': request.user},
+        )
+        if not creada:
+            return Response({'detail': 'Esa propuesta ya está asignada a este miembro.'}, status=400)
+        _historial(propuesta, request.user, 'Asignar revisión', f'Asignada a {revision.miembro.get_full_name()} para su revisión.')
+        notificar(revision.miembro, 'comisiones', 'Se te asignó una propuesta para revisar',
+                  f'Revisa la propuesta de {propuesta.candidato_nombre} para "{propuesta.premio.nombre}".',
+                  url_accion=f'/app/propuestas/{propuesta.id}')
+        registrar(request.user, 'Asignar revisión', 'comisiones', f'propuesta {propuesta.id} -> {revision.miembro}', request)
+        return Response(AsignacionRevisionSerializer(revision).data, status=201)
+
+    @action(detail=True, methods=['post'])
+    def quitar_revision(self, request, pk=None):
+        propuesta = self.get_object()
+        if not self._es_jefe_de_su_comision(request.user, propuesta):
+            return Response({'detail': 'No autorizado.'}, status=403)
+        revision = AsignacionRevision.objects.filter(propuesta=propuesta, pk=request.data.get('revision')).first()
+        if not revision:
+            return Response({'detail': 'Revisión no encontrada.'}, status=404)
+        _historial(propuesta, request.user, 'Quitar revisión', f'Se retiró la asignación de {revision.miembro.get_full_name()}.')
+        registrar(request.user, 'Quitar revisión', 'comisiones', f'propuesta {propuesta.id} -> {revision.miembro}', request)
+        revision.delete()
+        return Response(status=204)
+
+    @action(detail=True, methods=['post'])
+    def registrar_revision(self, request, pk=None):
+        """RF-016: el miembro asignado deja su criterio y puntuación."""
+        propuesta = self.get_object()
+        revision = AsignacionRevision.objects.filter(propuesta=propuesta, miembro=request.user).first()
+        if not revision:
+            return Response({'detail': 'Esta propuesta no te fue asignada para revisión.'}, status=403)
+        criterio = (request.data.get('criterio') or '').strip()
+        if not criterio:
+            return Response({'detail': 'Debe escribir su criterio sobre la propuesta.'}, status=400)
+        puntuacion = request.data.get('puntuacion')
+        if puntuacion in (None, ''):
+            puntuacion = None
+        else:
+            try:
+                puntuacion = int(puntuacion)
+            except (TypeError, ValueError):
+                return Response({'detail': 'La puntuación debe ser un número entre 1 y 10.'}, status=400)
+            if not 1 <= puntuacion <= 10:
+                return Response({'detail': 'La puntuación debe estar entre 1 y 10.'}, status=400)
+        revision.criterio = criterio
+        revision.puntuacion = puntuacion
+        revision.revisada = True
+        revision.fecha_revision = timezone.now()
+        revision.save()
+        _historial(propuesta, request.user, 'Revisión de comisión', 'Un miembro registró su criterio.')
+        comision = propuesta.comision
+        if comision and comision.jefe:
+            notificar(comision.jefe, 'comisiones', 'Revisión completada',
+                      f'{request.user.get_full_name()} revisó la propuesta de {propuesta.candidato_nombre}.',
+                      url_accion=f'/app/propuestas/{propuesta.id}')
+        registrar(request.user, 'Registrar revisión', 'comisiones', f'propuesta {propuesta.id}', request)
+        return Response(AsignacionRevisionSerializer(revision).data)
 
     @action(detail=True, methods=['post'])
     def elevar(self, request, pk=None):

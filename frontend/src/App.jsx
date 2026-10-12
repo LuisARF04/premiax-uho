@@ -11,6 +11,7 @@ import Usuarios from './pages/Usuarios';
 import Areas from './pages/Areas';
 import Premios from './pages/Premios';
 import Etapas from './pages/Etapas';
+import Reglamento from './pages/Reglamento';
 import Nomencladores from './pages/Nomencladores';
 import Comisiones from './pages/Comisiones';
 import PanelComision from './pages/PanelComision';
@@ -49,9 +50,10 @@ export default function App() {
             <Route path="areas" element={<ProtectedRoute rolMinimo="admin"><Areas /></ProtectedRoute>} />
             <Route path="premios" element={<ProtectedRoute rolMinimo="admin"><Premios /></ProtectedRoute>} />
             <Route path="etapas" element={<ProtectedRoute rolMinimo="admin"><Etapas /></ProtectedRoute>} />
+            <Route path="reglamento" element={<ProtectedRoute rolMinimo="admin"><Reglamento /></ProtectedRoute>} />
             <Route path="nomencladores" element={<ProtectedRoute rolMinimo="admin"><Nomencladores /></ProtectedRoute>} />
 
-            <Route path="estadisticas" element={<ProtectedRoute rolMinimo="gestor_global"><Estadisticas /></ProtectedRoute>} />
+            <Route path="estadisticas" element={<ProtectedRoute rolMinimo="jefe_comision"><Estadisticas /></ProtectedRoute>} />
             <Route path="aprobacion-final" element={<ProtectedRoute rolMinimo="gestor_global"><AprobacionFinal /></ProtectedRoute>} />
             <Route path="ganadores" element={<ProtectedRoute rolMinimo="gestor_global"><Ganadores /></ProtectedRoute>} />
             <Route path="auditoria" element={<ProtectedRoute rolMinimo="admin"><Auditoria /></ProtectedRoute>} />

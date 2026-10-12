@@ -155,7 +155,8 @@ class Command(BaseCommand):
         for nombre, inicio, cierre, resp, orden in etapas:
             EtapaProceso.objects.get_or_create(
                 nombre=nombre, anio=anio,
-                defaults=dict(fecha_inicio=inicio, fecha_cierre=cierre, responsable_desc=resp, orden=orden),
+                defaults=dict(fecha_inicio=inicio, fecha_cierre=cierre, responsable_desc=resp, orden=orden,
+                              es_convocatoria=(orden == 1)),
             )
 
     def _crear_usuario(self, username, first_name, last_name, rol, area=None, departamento=None,

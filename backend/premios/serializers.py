@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import CategoriaPremio, EtapaProceso, Premio
+from .models import CategoriaPremio, EtapaProceso, Premio, ReglamentoSeccion
 
 
 class PremioSerializer(serializers.ModelSerializer):
@@ -44,4 +44,10 @@ class EtapaProcesoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EtapaProceso
-        fields = ['id', 'nombre', 'descripcion', 'fecha_inicio', 'fecha_cierre', 'anio', 'orden', 'responsable_desc', 'estado']
+        fields = ['id', 'nombre', 'descripcion', 'fecha_inicio', 'fecha_cierre', 'anio', 'orden', 'responsable_desc', 'es_convocatoria', 'estado']
+
+
+class ReglamentoSeccionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReglamentoSeccion
+        fields = ['id', 'titulo', 'icono', 'contenido', 'orden', 'activo']

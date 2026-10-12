@@ -49,6 +49,9 @@ class EtapaProceso(models.Model):
     anio = models.PositiveIntegerField(default=timezone.now().year)
     orden = models.PositiveIntegerField(default=0)
     responsable_desc = models.CharField(max_length=200, blank=True)
+    es_convocatoria = models.BooleanField(
+        default=False, help_text='Etapa de convocatoria: durante ella los usuarios pueden subir propuestas.'
+    )
 
     class Meta:
         ordering = ['anio', 'orden']
@@ -64,3 +67,25 @@ class EtapaProceso(models.Model):
         if hoy > self.fecha_cierre:
             return 'finalizada'
         return 'en_curso'
+
+
+class ReglamentoSeccion(models.Model):
+    """Sección editable del reglamento que se muestra en el landing page (RF-001)."""
+    titulo = models.CharField(max_length=200)
+    icono = models.CharField(max_length=10, blank=True, default='📋')
+    contenido = models.TextField()
+    orden = models.PositiveIntegerField(default=0)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['orden', 'id']
+        verbose_name_plural = 'Secciones del reglamento'
+
+    def __str__(self):
+        return self.titulo
+
+
+def convocatoria_activa():
+    """True si hoy está dentro de una etapa marcada como convocatoria (subida de propuestas)."""
+    hoy = timezone.now().date()
+    return EtapaProceso.objects.filter(es_convocatoria=True, fecha_inicio__lte=hoy, fecha_cierre__gte=hoy).exists()

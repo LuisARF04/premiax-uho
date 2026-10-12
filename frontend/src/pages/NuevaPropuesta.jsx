@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import { mensajeError, validarDocumento } from '../api/errores';
 import { useAuth } from '../context/AuthContext';
 
 export default function NuevaPropuesta() {
-  const { usuario } = useAuth();
+  const { usuario, tienePrivilegio } = useAuth();
   const navigate = useNavigate();
   const [categorias, setCategorias] = useState([]);
   const [categoriaSel, setCategoriaSel] = useState('');
@@ -15,10 +16,22 @@ export default function NuevaPropuesta() {
   const [documento, setDocumento] = useState(null);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [convocatoriaActiva, setConvocatoriaActiva] = useState(true);
 
   useEffect(() => {
-    api.get('/categorias-premio/', { params: { page_size: 100 } }).then((r) => setCategorias(r.data.results || r.data));
+    api.get('/categorias-premio/', { params: { page_size: 100 } }).then((r) => {
+      // Solo categorías y premios vigentes; los premios «por comisión» los asigna la comisión (RF-018/022).
+      const puedeComision = tienePrivilegio('jefe_comision');
+      const validas = (r.data.results || r.data)
+        .filter((c) => c.activo)
+        .map((c) => ({ ...c, premios: c.premios.filter((p) => p.activo && (puedeComision || !p.es_por_comision)) }))
+        .filter((c) => c.premios.length);
+      setCategorias(validas);
+    });
+    api.get('/publico/convocatoria-activa/').then((r) => setConvocatoriaActiva(r.data.convocatoria_activa));
   }, []);
+
+  const bloqueado = !convocatoriaActiva && usuario?.rol === 'usuario';
 
   const categoria = categorias.find((c) => String(c.id) === String(categoriaSel));
   const premio = categoria?.premios.find((p) => String(p.id) === String(premioSel));
@@ -28,6 +41,11 @@ export default function NuevaPropuesta() {
     setError('');
     if (!premioSel || !resumen.trim()) {
       setError('Complete el premio y la fundamentación de la propuesta.');
+      return;
+    }
+    const errorDoc = validarDocumento(documento);
+    if (errorDoc) {
+      setError(errorDoc);
       return;
     }
     setEnviando(true);
@@ -41,7 +59,7 @@ export default function NuevaPropuesta() {
       const { data } = await api.post('/propuestas/', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       navigate(`/app/propuestas/${data.id}`);
     } catch (err) {
-      setError(err.response?.data?.detail || 'No se pudo enviar la propuesta.');
+      setError(mensajeError(err, 'No se pudo enviar la propuesta.'));
     } finally {
       setEnviando(false);
     }
@@ -52,6 +70,7 @@ export default function NuevaPropuesta() {
       <div className="ph"><div><h2>Nueva Propuesta de Premio</h2><div className="phs">Convocatoria {new Date().getFullYear()}</div></div></div>
       <div className="ca" style={{ maxWidth: 700 }}>
         <div className="al-info"><span>📋</span><div>Puedes proponer candidatos para los premios de tu área. El jefe de departamento revisará y elevará tu propuesta.</div></div>
+        {bloqueado && <div className="al-wn"><span>⏳</span><div>La convocatoria no está activa. Podrás subir propuestas cuando el administrador abra la etapa de convocatoria (consulta el calendario del proceso).</div></div>}
         {error && <div className="al-re"><span>⚠️</span><div>{error}</div></div>}
         <form onSubmit={handleSubmit}>
           <div className="card mb16">
@@ -118,16 +137,21 @@ export default function NuevaPropuesta() {
                 <div className="uz" onClick={() => document.getElementById('doc-input').click()}>
                   <div style={{ fontSize: '1.6rem' }}>📎</div>
                   <div style={{ fontWeight: 600, fontSize: '.86rem', marginTop: 4 }}>{documento ? documento.name : 'Haz clic para adjuntar un archivo'}</div>
-                  <div className="tsm tm" style={{ marginTop: 3 }}>PDF, DOC — máx. 10MB</div>
+                  <div className="tsm tm" style={{ marginTop: 3 }}>PDF, DOC, DOCX u ODT — máx. 10 MB</div>
                 </div>
-                <input id="doc-input" type="file" hidden onChange={(e) => setDocumento(e.target.files[0])} />
+                <input id="doc-input" type="file" accept=".pdf,.doc,.docx,.odt" hidden onChange={(e) => {
+                  const archivo = e.target.files[0];
+                  const problema = validarDocumento(archivo);
+                  setError(problema);
+                  setDocumento(problema ? null : archivo);
+                }} />
               </div>
             </div>
           </div>
 
           <div className="flex g8">
             <button type="button" className="bs" style={{ padding: '10px 22px' }} onClick={() => navigate(-1)}>← Cancelar</button>
-            <button type="submit" className="bp" style={{ flex: 1, justifyContent: 'center', padding: 10 }} disabled={enviando}>
+            <button type="submit" className="bp" style={{ flex: 1, justifyContent: 'center', padding: 10 }} disabled={enviando || bloqueado}>
               {enviando ? 'Enviando…' : '📤 Enviar Propuesta'}
             </button>
           </div>

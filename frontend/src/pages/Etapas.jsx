@@ -40,7 +40,7 @@ export default function Etapas() {
                 {etapas.map((e) => (
                   <tr key={e.id} style={e.estado === 'en_curso' ? { background: '#FEF9E7' } : undefined}>
                     <td>{e.orden}</td>
-                    <td><strong>{e.nombre}</strong>{e.descripcion && <div className="tsm tm">{e.descripcion}</div>}</td>
+                    <td><strong>{e.nombre}</strong>{e.es_convocatoria && <span className="bg bg-go" style={{ marginLeft: 6 }}>Convocatoria</span>}{e.descripcion && <div className="tsm tm">{e.descripcion}</div>}</td>
                     <td>{e.fecha_inicio}</td><td>{e.fecha_cierre}</td><td>{e.responsable_desc}</td>
                     <td><EstadoBadge estado={e.estado} /></td>
                     <td><button className="bs" style={{ fontSize: '.73rem', padding: '3px 7px' }} onClick={() => setModal(e)}>✏️</button>{' '}
@@ -62,6 +62,7 @@ function EtapaForm({ etapa, error, onClose, onSave }) {
     id: etapa.id, nombre: etapa.nombre || '', descripcion: etapa.descripcion || '',
     fecha_inicio: etapa.fecha_inicio || '', fecha_cierre: etapa.fecha_cierre || '',
     anio: etapa.anio || new Date().getFullYear(), orden: etapa.orden ?? 1, responsable_desc: etapa.responsable_desc || '',
+    es_convocatoria: etapa.es_convocatoria || false,
   });
   return (
     <Modal title={etapa.id ? 'Editar Etapa' : 'Nueva Etapa'} onClose={onClose}>
@@ -77,6 +78,10 @@ function EtapaForm({ etapa, error, onClose, onSave }) {
         <div className="fg"><label>Orden</label><input className="fc" type="number" value={form.orden} onChange={(e) => setForm({ ...form, orden: e.target.value })} /></div>
         <div className="fg"><label>Responsable</label><input className="fc" value={form.responsable_desc} onChange={(e) => setForm({ ...form, responsable_desc: e.target.value })} /></div>
       </div>
+      <label className="flex ic g8 mb16" style={{ cursor: 'pointer', fontSize: '.86rem' }}>
+        <input type="checkbox" checked={form.es_convocatoria} onChange={(e) => setForm({ ...form, es_convocatoria: e.target.checked })} />
+        <span>Es la etapa de convocatoria (los usuarios pueden subir propuestas y el landing muestra el botón «Proponer»)</span>
+      </label>
       <button className="bp wf jc" onClick={() => onSave(form)}>Guardar</button>
     </Modal>
   );

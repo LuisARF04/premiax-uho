@@ -81,12 +81,12 @@ señalado en comentarios donde aplica):
 
 ## Módulos implementados (según el ERS)
 
-- Landing page pública: reglamento, categorías y premios, galería de premiados por año,
+- Landing page pública: reglamento (editable por el admin desde «Reglamento»), categorías y premios, galería de premiados por año,
   calendario del proceso, botón de convocatoria condicionado a la etapa activa.
 - Autenticación simulando AGA_AUTH + selección de área/departamento en primer acceso.
 - RBAC con los 8 roles del ERS (superadmin → usuario) y jerarquía de privilegios.
 - CRUD de: categorías de premio, premios, etapas del proceso, áreas y departamentos
-  (con importación CSV), nomencladores (categorías docentes/científicas, cargos, carreras).
+  (con importación Excel `.xlsx`/CSV validada y advertencia al borrar áreas con usuarios), nomencladores (categorías docentes/científicas, cargos, carreras).
 - Flujo completo de propuestas: creación → revisión de departamento → revisión de área →
   asignación/reasignación de comisión → propuesta de ganadores → aprobación final, con
   historial completo por propuesta.
@@ -94,10 +94,39 @@ señalado en comentarios donde aplica):
 - Gestión de comisiones (jefe, miembros, premios asignados) y panel de comisión.
 - Registro retroactivo de ganadores para años anteriores.
 - Notificaciones internas (+ envío de correo simulado) en cada evento relevante del flujo.
-- Panel de usuarios inactivos.
-- Dashboard principal y dashboard estadístico (propuestas por área/categoría, participación).
+- Control de usuarios inactivos (sin ingreso o con propuestas sin revisar, por rol).
+- Revisiones dentro de la comisión: el jefe asigna propuestas a miembros, que solo ven lo asignado
+  y registran criterio y puntuación.
+- Propuestas con control de versiones (cada cambio de contenido o documento genera una versión)
+  y validación de archivos (PDF/DOC/DOCX/ODT e imágenes, máx. 10 MB, comprobando el contenido real).
+- Dashboard principal y dashboard estadístico con gráficos interactivos exportables (CSV/PNG),
+  actualizados cada 30 s; accesible a admin, gestor global y jefe de comisión.
 - Logs de auditoría de toda acción que modifica datos, más acciones de negocio detalladas.
 - Perfil de usuario con preferencias de notificación y visibilidad de foto en el landing.
+
+## Avisos automáticos de etapas
+
+El inicio de cada etapa y la alerta de fecha límite (3 días antes) se notifican una sola vez por etapa.
+Se generan al consultar el dashboard principal y también pueden programarse (por ejemplo, una vez al día):
+
+```bash
+python manage.py notificar_etapas
+```
+
+La etapa de convocatoria se marca con la casilla «Es la etapa de convocatoria» en *Etapas del Proceso*;
+solo mientras está en curso los usuarios pueden subir propuestas y el landing muestra «Proponer».
+
+## Importar áreas y departamentos
+
+Archivo `.xlsx` o `.csv` con la primera fila `area,departamento`. Se valida toda la estructura antes de
+importar; si hay errores no se importa nada y se indican las filas con problemas.
+
+## Pruebas
+
+```bash
+cd backend
+python manage.py test
+```
 
 ## Notas de seguridad para este demo
 

@@ -10,7 +10,11 @@ const ROLES = [
 ];
 
 export default function Usuarios() {
-  const { tienePrivilegio } = useAuth();
+  const { usuario: yo, tienePrivilegio } = useAuth();
+  const esSuperadmin = tienePrivilegio('superadmin');
+  // Reglas del servidor (RF-008): nadie cambia su propio rol y solo el superadmin toca roles Admin/Superadmin.
+  const puedeEditarRol = (u) => u.id !== yo?.id && (esSuperadmin || !['admin', 'superadmin'].includes(u.rol));
+  const rolesAsignables = ROLES.filter(([v]) => esSuperadmin || !['admin', 'superadmin'].includes(v));
   const [usuarios, setUsuarios] = useState(null);
   const [busqueda, setBusqueda] = useState('');
   const [rolFiltro, setRolFiltro] = useState('');
@@ -63,7 +67,7 @@ export default function Usuarios() {
                     <td><span className="rc">{u.rol_display}</span></td>
                     <td className="tsm tm">{u.last_login ? new Date(u.last_login).toLocaleString() : 'Nunca'}</td>
                     <td>
-                      {tienePrivilegio('admin') && (
+                      {tienePrivilegio('admin') && puedeEditarRol(u) && (
                         <button className="bs" style={{ fontSize: '.73rem', padding: '4px 9px' }}
                           onClick={() => { setEditando(u); setNuevoRol(u.rol); }}>Editar Rol</button>
                       )}
@@ -82,7 +86,7 @@ export default function Usuarios() {
           <div className="fg mb16">
             <label>Rol</label>
             <select className="fc" value={nuevoRol} onChange={(e) => setNuevoRol(e.target.value)}>
-              {ROLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              {rolesAsignables.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
           <button className="bp wf jc" onClick={guardarRol}>Guardar</button>

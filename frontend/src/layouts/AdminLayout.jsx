@@ -14,10 +14,11 @@ const MENU = [
     { to: '/app/areas', icon: '🏢', label: 'Áreas y Deptos.', rol: 'admin' },
     { to: '/app/premios', icon: '🏆', label: 'Categorías y Premios', rol: 'admin' },
     { to: '/app/etapas', icon: '📅', label: 'Etapas del Proceso', rol: 'admin' },
+    { to: '/app/reglamento', icon: '📜', label: 'Reglamento', rol: 'admin' },
     { to: '/app/nomencladores', icon: '📋', label: 'Nomencladores', rol: 'admin' },
   ]},
   { grupo: 'Reportes', items: [
-    { to: '/app/estadisticas', icon: '📈', label: 'Estadísticas', rol: 'gestor_global' },
+    { to: '/app/estadisticas', icon: '📈', label: 'Estadísticas', rol: 'jefe_comision' },
     { to: '/app/aprobacion-final', icon: '✅', label: 'Aprobación Final', rol: 'gestor_global' },
     { to: '/app/ganadores', icon: '🎖️', label: 'Ganadores / Retroactivos', rol: 'gestor_global' },
     { to: '/app/auditoria', icon: '🔎', label: 'Logs de Auditoría', rol: 'admin' },

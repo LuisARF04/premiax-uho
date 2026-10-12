@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from premios.serializers import PremioSerializer
 from usuarios.serializers import UsuarioMiniSerializer
-from .models import Comision, MiembroComision
+from .models import AsignacionRevision, Comision, MiembroComision
 
 
 class MiembroComisionSerializer(serializers.ModelSerializer):
@@ -29,3 +29,16 @@ class ComisionSerializer(serializers.ModelSerializer):
 
     def get_propuestas_revisadas_count(self, obj):
         return obj.propuestas_asignadas.exclude(estado='en_comision').count()
+
+
+class AsignacionRevisionSerializer(serializers.ModelSerializer):
+    miembro_nombre = serializers.CharField(source='miembro.get_full_name', read_only=True)
+    asignado_por_nombre = serializers.CharField(source='asignado_por.get_full_name', read_only=True, default=None)
+
+    class Meta:
+        model = AsignacionRevision
+        fields = [
+            'id', 'propuesta', 'miembro', 'miembro_nombre', 'asignado_por', 'asignado_por_nombre',
+            'criterio', 'puntuacion', 'revisada', 'fecha_asignacion', 'fecha_revision',
+        ]
+        read_only_fields = fields

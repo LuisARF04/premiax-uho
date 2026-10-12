@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -10,7 +11,7 @@ from auditoria.utils import registrar
 from .models import Rol, TipoUsuarioAGA, Usuario
 from .permissions import IsAdmin, IsSuperadmin, hay_privilegio
 from .serializers import (
-    CambiarRolSerializer, CompletarPerfilSerializer, UsuarioMiniSerializer, UsuarioSerializer,
+    CambiarRolSerializer, CompletarPerfilSerializer, PerfilSerializer, UsuarioMiniSerializer, UsuarioSerializer,
 )
 
 
@@ -55,7 +56,7 @@ def logout_view(request):
 def me_view(request):
     if request.method == 'GET':
         return Response(UsuarioSerializer(request.user).data)
-    serializer = UsuarioSerializer(request.user, data=request.data, partial=True)
+    serializer = PerfilSerializer(request.user, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
     serializer.save()
     return Response(serializer.data)
@@ -84,22 +85,53 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             return UsuarioMiniSerializer
         return UsuarioSerializer
 
+    @staticmethod
+    def _es_rol_de_administracion(rol):
+        return rol in (Rol.ADMIN, Rol.SUPERADMIN)
+
+    def _verificar_puede_gestionar(self, objetivo):
+        """Solo un superadmin puede modificar o eliminar cuentas de admin/superadmin (RF-008)."""
+        if self._es_rol_de_administracion(objetivo.rol) and not hay_privilegio(self.request.user, Rol.SUPERADMIN):
+            raise PermissionDenied('Solo el superadmin puede gestionar cuentas de admin o superadmin.')
+
+    def perform_update(self, serializer):
+        self._verificar_puede_gestionar(serializer.instance)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.pk == self.request.user.pk:
+            raise PermissionDenied('No puedes eliminar tu propia cuenta.')
+        self._verificar_puede_gestionar(instance)
+        instance.delete()
+
+    def create(self, request, *args, **kwargs):
+        return Response(
+            {'detail': 'El registro de usuarios es automático al iniciar sesión con AGA_AUTH; no se pueden crear manualmente.'},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
     @action(detail=True, methods=['patch'])
     def cambiar_rol(self, request, pk=None):
         usuario = self.get_object()
         serializer = CambiarRolSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         nuevo_rol = serializer.validated_data['rol']
-        if nuevo_rol in (Rol.ADMIN, Rol.SUPERADMIN) and not hay_privilegio(request.user, Rol.SUPERADMIN):
-            return Response({'detail': 'Solo el superadmin puede asignar el rol Admin/Superadmin.'}, status=403)
         anterior = usuario.rol
+        es_superadmin = hay_privilegio(request.user, Rol.SUPERADMIN)
+
+        if usuario.pk == request.user.pk:
+            return Response({'detail': 'No puedes cambiar tu propio rol.'}, status=403)
+        if (self._es_rol_de_administracion(nuevo_rol) or self._es_rol_de_administracion(anterior)) and not es_superadmin:
+            return Response(
+                {'detail': 'Solo el superadmin puede asignar o retirar los roles Admin y Superadmin.'}, status=403,
+            )
+        if anterior == Rol.SUPERADMIN and nuevo_rol != Rol.SUPERADMIN and                 not Usuario.objects.filter(rol=Rol.SUPERADMIN, activo=True, is_active=True).exclude(pk=usuario.pk).exists():
+            return Response({'detail': 'Debe existir al menos un superadmin activo en el sistema.'}, status=400)
+
         usuario.rol = nuevo_rol
         usuario.save(update_fields=['rol'])
         registrar(request.user, 'Modificar rol', 'usuarios', f'Rol de {usuario.username} cambiado de {anterior} a {nuevo_rol}', request)
         return Response(UsuarioSerializer(usuario).data)
-
-    def perform_create(self, serializer):
-        raise Exception('El registro de usuarios es automático vía AGA_AUTH; use /api/dev/crear-usuario/ solo para datos de demo.')
 
 
 @api_view(['GET'])

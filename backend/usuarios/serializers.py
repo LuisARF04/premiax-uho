@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from premiax.validators import validar_imagen
 from .models import Usuario
 
 
@@ -32,10 +33,21 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'cargo', 'foto', 'foto_publica', 'perfil_completo', 'notif_email', 'notif_fechas_limite',
             'notif_propuestas_elevadas', 'notif_resumen_semanal', 'activo', 'fecha_registro', 'last_login',
         ]
-        read_only_fields = ['username', 'email', 'correo_institucional', 'tipo_aga', 'fecha_registro', 'last_login']
+        # El rol solo cambia por la acción `cambiar_rol`, que aplica las reglas del ERS (RF-008).
+        read_only_fields = ['username', 'email', 'correo_institucional', 'tipo_aga', 'rol', 'fecha_registro', 'last_login']
 
     def get_nombre_completo(self, obj):
         return obj.get_full_name() or obj.username
+
+    def validate_foto(self, archivo):
+        return validar_imagen(archivo)
+
+
+class PerfilSerializer(UsuarioSerializer):
+    """Autoedición del propio perfil: además del rol, tampoco se puede cambiar el estado de la cuenta."""
+
+    class Meta(UsuarioSerializer.Meta):
+        read_only_fields = UsuarioSerializer.Meta.read_only_fields + ['activo']
 
 
 class CompletarPerfilSerializer(serializers.ModelSerializer):

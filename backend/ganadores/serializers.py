@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from premiax.validators import validar_imagen
 from .models import Ganador
 
 
@@ -16,6 +17,9 @@ class GanadorSerializer(serializers.ModelSerializer):
             'foto_url', 'fundamentacion', 'tipo', 'anio', 'aprobado_por', 'fecha_aprobacion', 'publicado',
         ]
         read_only_fields = ['aprobado_por', 'fecha_aprobacion']
+
+    def validate_foto_url(self, archivo):
+        return validar_imagen(archivo)
 
 
 class GanadorPublicoSerializer(serializers.ModelSerializer):

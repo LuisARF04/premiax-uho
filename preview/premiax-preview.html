@@ -142,21 +142,17 @@ footer{background:var(--blue);color:rgba(255,255,255,.65);text-align:center;padd
   <nav class="lnav">
     <div style="font-family:Georgia,serif;font-weight:900;color:var(--blue)">PREMIAX<span style="color:var(--gold)">·UHO</span></div>
     <div class="lnav-links" style="display:flex;gap:18px"><a href="#reglamento">Reglamento</a><a href="#premios">Premios</a><a href="#galardonados">Galardonados</a><a href="#calendario">Calendario</a></div>
-    <div style="margin-left:auto;display:flex;gap:8px"><button class="btn-s" onclick="showLogin()">Ingresar</button><button class="btn" onclick="showLogin()">🏆 Proponer</button></div>
+    <div style="margin-left:auto;display:flex;gap:8px"><button class="btn-s" onclick="showLogin()">Ingresar</button><button class="btn" id="navProponer" onclick="showLogin()">🏆 Proponer</button></div>
   </nav>
   <section class="hero">
-    <div style="display:inline-block;background:rgba(201,162,39,.2);border:1px solid rgba(201,162,39,.5);color:var(--gold);font-size:11px;padding:4px 14px;border-radius:20px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px">✦ Convocatoria 2026 — Activa</div>
+    <div id="heroBadge" style="display:inline-block;background:rgba(201,162,39,.2);border:1px solid rgba(201,162,39,.5);color:var(--gold);font-size:11px;padding:4px 14px;border-radius:20px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px">✦ Convocatoria 2026 — Activa</div>
     <h1>Premios del <span>Rector</span><br>Universidad de Holguín</h1>
     <p>Reconocemos la excelencia académica, científica y laboral de la comunidad universitaria.</p>
-    <button class="btn" style="background:var(--gold);color:var(--blue);padding:12px 26px" onclick="showLogin()">🏆 Presentar propuesta</button>
+    <button class="btn" id="heroBtn" style="background:var(--gold);color:var(--blue);padding:12px 26px" onclick="showLogin()">🏆 Presentar propuesta</button>
   </section>
   <section class="sec" id="reglamento" style="background:#fff">
     <h2>📋 Reglamento</h2><p class="s">Principios y procedimiento del Sistema de Incentivos y Premiaciones.</p>
-    <div class="g3">
-      <div class="card"><div class="cb"><div style="font-size:1.4rem">🎯</div><b style="color:var(--blue)">Principios fundamentales</b><p style="color:var(--muted);font-size:.84rem;margin-top:6px">Reconocimiento del mérito y la dedicación de los trabajadores universitarios.</p></div></div>
-      <div class="card"><div class="cb"><div style="font-size:1.4rem">🏅</div><b style="color:var(--blue)">Niveles de incentivos</b><p style="color:var(--muted);font-size:.84rem;margin-top:6px">Premios individuales y colectivos, docentes y no docentes.</p></div></div>
-      <div class="card"><div class="cb"><div style="font-size:1.4rem">📑</div><b style="color:var(--blue)">Procedimiento</b><p style="color:var(--muted);font-size:.84rem;margin-top:6px">Desde propuestas de departamento hasta la aprobación por Rectoría.</p></div></div>
-    </div>
+    <div class="g3" id="landingReg"></div>
   </section>
   <section class="sec" id="premios"><h2>🏆 Categorías de premios</h2><p class="s">Premios disponibles por categoría y criterios de selección.</p><div class="cgrid" id="landingCats"></div></section>
   <section class="sec" id="calendario" style="background:#fff"><h2>📅 Calendario 2026</h2><p class="s">Estado de las etapas del proceso.</p><div class="tl" id="landingCal"></div></section>
@@ -184,11 +180,12 @@ const ROLES = {
   admin:{label:'Admin',nombre:'María Rodríguez López',area:'Facultad de Informática'},
   gestor_global:{label:'Gestor Global',nombre:'Juan Pablo Martínez',area:'VRRPA'},
   jefe_comision:{label:'Jefe de Comisión',nombre:'Raúl Fuentes',area:'VRRPA · Formación de Pregrado'},
+  miembro_comision:{label:'Miembro de Comisión',nombre:'Pedro Gómez Castro',area:'Facultad de Informática · Ing. de Software'},
   jefe_area:{label:'Jefe de Área',nombre:'Ana García Ruiz',area:'Facultad de Agronomía'},
   jefe_departamento:{label:'Jefe de Departamento',nombre:'Luis Torres Mora',area:'Facultad de Agronomía · Biología'},
   usuario:{label:'Usuario',nombre:'Rosa Medina Pérez',area:'Facultad de Informática · Ing. de Software'}
 };
-const RANK=['superadmin','admin','gestor_global','jefe_comision','jefe_area','jefe_departamento','usuario'];
+const RANK=['superadmin','admin','gestor_global','jefe_comision','miembro_comision','jefe_area','jefe_departamento','usuario'];
 const can=(rol)=>RANK.indexOf(state.rol)!==-1 && RANK.indexOf(state.rol)<=RANK.indexOf(rol);
 
 const PREMIOS=[
@@ -200,7 +197,7 @@ const PREMIOS=[
  {id:6,nombre:'Mejor Colectivo no docente',cat:'Colectivos No Docentes',criterios:'Desempeño colectivo sobresaliente.',premios:1,recon:1}
 ];
 const ETAPAS=[
- {n:'Convocatoria y propuestas',ini:'2026-09-01',fin:'2026-10-20',resp:'Usuarios',estado:'en_curso'},
+ {n:'Convocatoria y propuestas',ini:'2026-09-01',fin:'2026-10-20',resp:'Usuarios',estado:'en_curso',conv:true},
  {n:'Revisión a nivel de departamento',ini:'2026-09-01',fin:'2026-10-20',resp:'Jefes de Departamento',estado:'en_curso'},
  {n:'Trabajo de comisiones',ini:'2026-10-02',fin:'2026-10-25',resp:'Jefes de Comisión',estado:'en_curso'},
  {n:'Análisis Comisión Central',ini:'2026-11-01',fin:'2026-11-01',resp:'Gestor Global',estado:'proxima'},
@@ -219,13 +216,26 @@ let PROPUESTAS=[
  {id:4,cand:'Pedro Gómez Castro',premio:3,area:'Facultad de Informática',dpto:'Ingeniería de Software',creador:'Ana García Ruiz',estado:'en_comision',nivel:'comision',comision:'Formación de Pregrado',resumen:'Coordinación de proyectos de formación y tutorías.',historial:[['Ana García Ruiz','Creación de propuesta','2026-09-18 12:00'],['Ana García Ruiz','Elevar a comisión','2026-09-21 16:10']]},
  {id:5,cand:'Departamento de Matemática',premio:5,area:'Facultad de Informática',dpto:'Matemática',creador:'María Rodríguez López',estado:'aprobada',nivel:'comision',comision:'Integrales y Gestión',resumen:'Resultados metodológicos e indicadores de calidad.',historial:[['María Rodríguez López','Creación de propuesta','2026-08-30 10:00'],['Víctor Pérez Díaz','Propuesta de ganador','2026-09-10 12:00'],['Juan Pablo Martínez','Aprobación final','2026-09-12 09:00']]}
 ];
+let REGLAMENTO=[
+ {t:'Principios fundamentales',i:'🎯',c:'Reconocimiento del mérito y la dedicación de los trabajadores universitarios.',on:true},
+ {t:'Niveles de incentivos',i:'🏅',c:'Premios individuales y colectivos, docentes y no docentes.',on:true},
+ {t:'Procedimiento',i:'📑',c:'Desde propuestas de departamento hasta la aprobación por Rectoría.',on:true}
+];
+let AREAS=[
+ {n:'Facultad de Informática',deptos:['Ingeniería de Software','Matemática'],usuarios:2},
+ {n:'Facultad de Agronomía',deptos:['Biología'],usuarios:2},
+ {n:'Dirección de Recursos Humanos',deptos:['Gestión de Capital Humano'],usuarios:1},
+ {n:'VRRPA',deptos:[],usuarios:0}
+];
+// Cada propuesta lleva su control de versiones (RF-018) y las revisiones asignadas a miembros de comisión (RF-016).
+function initProp(p){p.version=p.version||1;p.versiones=p.versiones||[{v:1,u:p.creador,f:'2026-09-20 09:00',cand:p.cand,doc:''}];p.revs=p.revs||[];return p}
 const COMISIONES=[
  {id:1,nombre:'Integrales y Gestión',jefe:'Víctor Pérez Díaz',miembros:['Pedro Gómez Castro','Carlos López Peña'],premios:['Mejor profesor integralmente','Mejor Departamento docente']},
  {id:2,nombre:'Formación de Pregrado',jefe:'Raúl Fuentes',miembros:['Ana García Ruiz','Luis Torres Mora','Pedro Gómez Castro'],premios:['Mejor profesor joven (≤35 años)','Mejor profesor guía']}
 ];
 const USUARIOS=[
  ['Carlos Pérez González','superadmin','Dirección de RRHH'],['María Rodríguez López','admin','Facultad de Informática'],
- ['Juan Pablo Martínez','gestor_global','VRRPA'],['Raúl Fuentes','jefe_comision','VRRPA'],['Ana García Ruiz','jefe_area','Facultad de Agronomía'],
+ ['Juan Pablo Martínez','gestor_global','VRRPA'],['Raúl Fuentes','jefe_comision','VRRPA'],['Pedro Gómez Castro','miembro_comision','Facultad de Informática'],['Ana García Ruiz','jefe_area','Facultad de Agronomía'],
  ['Luis Torres Mora','jefe_departamento','Facultad de Agronomía'],['Rosa Medina Pérez','usuario','Facultad de Informática']
 ];
 const GANADORES=[
@@ -235,9 +245,21 @@ const GANADORES=[
  {n:'Ana García Ruiz',area:'FUM Moa',p:'Mejor profesor guía'}
 ];
 
+PROPUESTAS.forEach(initProp);
+
 /* ───────── Estado ───────── */
 const state={rol:null,page:'dashboard',sel:null,menuOpen:false,tab:'todas'};
 let nextId=10;
+const convocatoriaActiva=()=>ETAPAS.some(e=>e.conv&&e.estado==='en_curso');
+const DOC_EXT=['.pdf','.doc','.docx','.odt'];
+// RNF-009: formato permitido y tamaño máximo de 10 MB (el servidor valida además el contenido real).
+function validarDoc(f){if(!f)return '';if(f.size>10*1024*1024)return 'El archivo supera el máximo de 10 MB.';
+  const n=f.name.toLowerCase();return DOC_EXT.some(x=>n.endsWith(x))?'':'Formato no permitido. Use PDF, DOC, DOCX u ODT.'}
+function exportarCSV(nombre,filas){
+  if(!filas.length)return;const cols=Object.keys(filas[0]),q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const txt='\uFEFF'+[cols.map(q).join(','),...filas.map(f=>cols.map(c=>q(f[c])).join(','))].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv;charset=utf-8'}));a.download=nombre+'.csv';
+  document.body.appendChild(a);a.click();a.remove();toast('Exportado '+nombre+'.csv')}
 
 /* ───────── Utilidades ───────── */
 const $=(id)=>document.getElementById(id);
@@ -267,11 +289,13 @@ function renderSidebar(){
     ${item('comisiones','🏛️','Comisiones','miembro_comision')}
     <div class="sbs">Administración</div>
     ${item('usuarios','👥','Usuarios y Roles','admin')}
+    ${item('areas','🏢','Áreas y Deptos.','admin')}
     ${item('premios','🏆','Categorías y Premios','admin')}
     ${item('etapas','📅','Etapas del Proceso','admin')}
+    ${item('reglamento','📜','Reglamento','admin')}
     <div class="sbs">Reportes</div>
     ${item('aprobacion','✅','Aprobación Final','gestor_global')}
-    ${item('estadisticas','📈','Estadísticas','gestor_global')}
+    ${item('estadisticas','📈','Estadísticas','jefe_comision')}
     <div class="sbs">Cuenta</div>
     <div class="sbi" onclick="showLanding()"><span>🌐</span>Ver landing</div>
     <div class="sbi" onclick="logout()"><span>🚪</span>Cerrar sesión</div>`;
@@ -309,6 +333,7 @@ const VIEWS={
     if(state.rol==='jefe_area')return p.area==='Facultad de Agronomía';
     if(state.rol==='jefe_departamento')return p.dpto==='Biología';
     if(state.rol==='jefe_comision')return p.comision==='Formación de Pregrado';
+    if(state.rol==='miembro_comision')return p.revs.some(r=>r.m===ROLES[state.rol].nombre)||p.creador===ROLES[state.rol].nombre;
     return p.creador===ROLES[state.rol].nombre;
   });
   const tabs=[['todas','Todas'],['pendiente_departamento','Pendientes Dpto.'],['en_comision','En Comisión'],['aprobada','Aprobadas']];
@@ -330,10 +355,26 @@ const VIEWS={
   if(p.estado==='pendiente_departamento'&&(state.rol==='jefe_departamento'||can('gestor_global')))acciones.push(`<button class="btn" onclick="elevar(${p.id})">↑ Elevar a Área</button>`);
   if(p.estado==='pendiente_area'&&(state.rol==='jefe_area'||can('gestor_global')))acciones.push(`<button class="btn" onclick="elevar(${p.id})">↑ Elevar a Comisión</button>`);
   if(p.estado==='en_comision'&&(state.rol==='jefe_comision'||can('gestor_global')))acciones.push(`<button class="btn" onclick="proponer(${p.id})">🏆 Proponer como ganador</button>`);
+  const nombre=ROLES[state.rol].nombre;
+  const puedeEditar=p.estado!=='aprobada'&&p.estado!=='rechazada'&&(can('gestor_global')||(p.nivel==='departamento'&&(p.creador===nombre||state.rol==='jefe_departamento'))||(p.nivel==='area'&&state.rol==='jefe_area'));
+  if(puedeEditar)acciones.unshift(`<button class="btn-s" onclick="editarProp(${p.id})">✏️ Modificar / Enriquecer</button>`);
+  const esJefeCom=p.comision&&(state.rol==='jefe_comision'||can('gestor_global'));
+  const miRev=p.revs.find(r=>r.m===nombre);
+  const miembrosCom=(COMISIONES.find(c=>c.nombre===p.comision)||{miembros:[]}).miembros.filter(m=>!p.revs.some(r=>r.m===m));
+  const cardRev=(p.revs.length||(esJefeCom&&p.estado==='en_comision'))?`
+      <div class="card"><div class="ch"><h3>🧑‍⚖️ Revisiones de la comisión</h3></div><div class="cb">
+        ${esJefeCom&&p.estado==='en_comision'?`<div style="display:flex;gap:8px;margin-bottom:12px"><select class="fc" id="selMiembro"><option value="">Asignar revisión a un miembro…</option>${miembrosCom.map(m=>`<option>${esc(m)}</option>`).join('')}</select><button class="btn" onclick="asignarRev(${p.id})">Asignar</button></div>`:''}
+        ${(esJefeCom?p.revs:p.revs.filter(r=>r.m===nombre)).map(r=>`<div class="hl"><b>${esc(r.m)}</b> ${r.hecha?`<span class="bg b-gr">Revisada${r.punt?' · '+r.punt+'/10':''}</span>`:'<span class="bg b-wn">Pendiente</span>'}<small>${esc(r.crit||'Sin criterio aún')}</small></div>`).join('')||'<span style="color:var(--muted);font-size:.84rem">Aún no hay revisiones asignadas.</span>'}
+        ${miRev?`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px"><b style="font-size:.84rem;color:var(--blue)">Tu revisión</b>
+          <div class="fg"><label>Criterio</label><textarea class="fc" id="revCrit" rows="3">${esc(miRev.crit||'')}</textarea></div>
+          <div class="fg"><label>Puntuación (1-10)</label><input class="fc" id="revPunt" type="number" min="1" max="10" value="${miRev.punt||''}"></div>
+          <button class="btn" onclick="registrarRev(${p.id})">${miRev.hecha?'Actualizar revisión':'Enviar revisión'}</button></div>`:''}
+      </div></div>`:'';
+  const cardVer=`<div class="card"><div class="ch"><h3>🗂️ Versiones</h3></div><div class="cb">${p.versiones.map(v=>`<div class="hl"><b>Versión ${v.v}${v.v===p.version?' (actual)':''}</b><small>${esc(v.u)} · ${v.f} · ${esc(v.cand)}${v.doc?' · 📎 '+esc(v.doc):''}</small></div>`).join('')}</div></div>`;
   if(p.estado==='ganadora_propuesta'&&can('gestor_global')){acciones.push(`<button class="btn-ok" onclick="aprobar(${p.id})">✅ Aprobar</button>`,`<button class="btn-d" onclick="rechazar(${p.id})">✗ Rechazar</button>`)}
   return `
   <div class="ph"><div><div style="font-size:.78rem;color:var(--muted);margin-bottom:4px"><a href="#" onclick="event.preventDefault();go('propuestas')" style="color:var(--blue)">Propuestas</a> › Detalle #${p.id}</div>
-    <h2>${esc(PREMIOS.find(x=>x.id===p.premio).nombre)}</h2><div class="s">${esc(p.cand)} · ${esc(p.area)}</div></div>
+    <h2>${esc(PREMIOS.find(x=>x.id===p.premio).nombre)} <span class="bg b-gy">v${p.version}</span></h2><div class="s">${esc(p.cand)} · ${esc(p.area)}</div></div>
     <div class="ha">${badge(p.estado)}</div></div>
   <div class="ca"><div class="g2">
     <div>
@@ -342,6 +383,8 @@ const VIEWS={
         <p style="margin-top:12px;font-size:.88rem">${esc(p.resumen)}</p>
         ${p.comision?`<p style="margin-top:10px;font-size:.84rem"><b>Comisión:</b> ${esc(p.comision)}</p>`:''}
       </div></div>
+      ${cardRev}
+      ${cardVer}
       <div class="card"><div class="ch"><h3>⚙️ Acciones</h3></div><div class="cb" style="display:flex;gap:8px;flex-wrap:wrap">
         ${acciones.length?acciones.join(''):'<span style="color:var(--muted);font-size:.84rem">No hay acciones disponibles para tu rol en este estado.</span>'}
       </div></div>
@@ -369,7 +412,7 @@ const VIEWS={
   return `
   <div class="ph"><div><h2>Usuarios y Roles</h2><div class="s">${USUARIOS.length} usuarios registrados</div></div></div>
   <div class="ca"><div class="card"><table><thead><tr><th>Usuario</th><th>Área</th><th>Rol</th><th>Acción</th></tr></thead><tbody>
-  ${USUARIOS.map(([n,r,a],i)=>`<tr><td><b>${esc(n)}</b></td><td>${esc(a)}</td><td><span class="bg b-bl">${ROLES[r].label}</span></td><td><button class="btn-s" onclick="cambiarRol(${i})">Editar rol</button></td></tr>`).join('')}
+  ${USUARIOS.map(([n,r,a],i)=>`<tr><td><b>${esc(n)}</b></td><td>${esc(a)}</td><td><span class="bg b-bl">${ROLES[r].label}</span></td><td>${puedeEditarRol(i)?`<button class="btn-s" onclick="cambiarRol(${i})">Editar rol</button>`:'<span style="font-size:.76rem;color:var(--muted)">'+(n===ROLES[state.rol].nombre?'Tu propia cuenta':'Solo superadmin')+'</span>'}</td></tr>`).join('')}
   </tbody></table></div></div>`},
 
  premios(){
@@ -381,11 +424,28 @@ const VIEWS={
     ${PREMIOS.filter(p=>p.cat===c).map(p=>`<tr><td><b>${esc(p.nombre)}</b><div style="font-size:.76rem;color:var(--muted)">${esc(p.criterios)}</div></td><td>${p.premios}</td><td>${p.recon}</td></tr>`).join('')}
     </tbody></table></div>`).join('')}</div>`},
 
+ areas(){
+  return `
+  <div class="ph"><div><h2>Áreas y departamentos</h2><div class="s">${AREAS.length} áreas · gestión del organigrama</div></div>
+    <div class="ha"><label class="btn-s" style="cursor:pointer">📥 Importar Excel / CSV<input type="file" accept=".xlsx,.csv" hidden onchange="importarAreas(this)"></label></div></div>
+  <div class="ca"><div id="importMsg"></div><div class="card"><table><thead><tr><th>Área</th><th>Departamentos</th><th>Usuarios</th><th>Acción</th></tr></thead><tbody>
+  ${AREAS.map((a,i)=>`<tr><td><b>${esc(a.n)}</b></td><td style="font-size:.84rem">${a.deptos.map(esc).join(' · ')||'—'}</td><td>${a.usuarios}</td><td><button class="btn-d" onclick="eliminarArea(${i})">🗑</button></td></tr>`).join('')}
+  </tbody></table></div></div>`},
+
+ reglamento(){
+  return `
+  <div class="ph"><div><h2>Reglamento del sistema</h2><div class="s">Los cambios se publican de inmediato en el landing</div></div>
+    <div class="ha"><button class="btn" onclick="editarReg(-1)">+ Nueva sección</button></div></div>
+  <div class="ca"><div class="card"><table><thead><tr><th>Sección</th><th>Contenido</th><th>Visible</th><th>Acción</th></tr></thead><tbody>
+  ${REGLAMENTO.map((r,i)=>`<tr><td><b>${r.i} ${esc(r.t)}</b></td><td style="font-size:.82rem;color:var(--muted)">${esc(r.c)}</td><td>${r.on?'<span class="bg b-gr">Publicada</span>':'<span class="bg b-gy">Oculta</span>'}</td><td><button class="btn-s" onclick="editarReg(${i})">✏️</button> <button class="btn-d" onclick="eliminarReg(${i})">🗑</button></td></tr>`).join('')}
+  </tbody></table></div></div>`},
+
  etapas(){
   return `
-  <div class="ph"><div><h2>Etapas del proceso</h2><div class="s">Proceso 2026 — ${ETAPAS.length} etapas</div></div></div>
+  <div class="ph"><div><h2>Etapas del proceso</h2><div class="s">Proceso 2026 — ${ETAPAS.length} etapas</div></div>
+    <div class="ha"><button class="btn-s" onclick="toggleConv()">${convocatoriaActiva()?'⏹ Cerrar convocatoria':'▶ Abrir convocatoria'}</button></div></div>
   <div class="ca"><div class="card"><table><thead><tr><th>Etapa</th><th>Inicio</th><th>Cierre</th><th>Responsable</th><th>Estado</th></tr></thead><tbody>
-  ${ETAPAS.map(e=>`<tr><td><b>${esc(e.n)}</b></td><td>${e.ini}</td><td>${e.fin}</td><td>${esc(e.resp)}</td><td>${badge(e.estado==='en_curso'?'en_curso':e.estado==='proxima'?'pendiente_departamento':'aprobada').replace('Pendiente Dpto.','Próxima').replace('En Comisión','▶ En curso').replace('✅ Aprobada','Finalizada')}</td></tr>`).join('')}
+  ${ETAPAS.map(e=>`<tr><td><b>${esc(e.n)}</b>${e.conv?' <span class="bg b-go">Convocatoria</span>':''}</td><td>${e.ini}</td><td>${e.fin}</td><td>${esc(e.resp)}</td><td>${badge(e.estado==='en_curso'?'en_curso':e.estado==='proxima'?'pendiente_departamento':'aprobada').replace('Pendiente Dpto.','Próxima').replace('En Comisión','▶ En curso').replace('✅ Aprobada','Finalizada')}</td></tr>`).join('')}
   </tbody></table></div></div>`},
 
  aprobacion(){
@@ -397,20 +457,41 @@ const VIEWS={
   </tbody></table></div></div>`},
 
  estadisticas(){
-  const porArea={};PROPUESTAS.forEach(p=>porArea[p.area]=(porArea[p.area]||0)+1);
-  const max=Math.max(1,...Object.values(porArea));
+  const cuenta=(f)=>{const o={};PROPUESTAS.forEach(p=>{const k=f(p);o[k]=(o[k]||0)+1});return o};
+  const porArea=cuenta(p=>p.area),porPremio=cuenta(p=>PREMIOS.find(x=>x.id===p.premio).nombre);
+  const barras=(o)=>{const max=Math.max(1,...Object.values(o));return Object.entries(o).map(([a,n])=>`<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;font-size:.82rem"><div style="width:180px;text-align:right;color:var(--muted)">${esc(a)}</div><div style="flex:1;background:var(--border);border-radius:4px;height:18px"><div style="width:${n/max*100}%;height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:4px;color:#fff;font-size:.7rem;padding-left:6px;line-height:18px">${n}</div></div></div>`).join('')};
+  const csvBtn=(nom,o,c1)=>`<button class="btn-s" style="margin-left:auto" onclick='exportarCSV(${JSON.stringify(nom)},${JSON.stringify(Object.entries(o).map(([k,v])=>({[c1]:k,Propuestas:v})))})'>⬇ CSV</button>`;
+  const enviaron=AREAS.map(a=>({Área:a.n,'Envió propuestas':porArea[a.n]?'Sí':'No',Propuestas:porArea[a.n]||0}));
+  const roles=RANK.map(r=>{const us=USUARIOS.filter(u=>u[1]===r);return {Rol:ROLES[r].label,Usuarios:us.length,'Con propuestas':us.filter(u=>PROPUESTAS.some(p=>p.creador===u[0])).length}}).filter(r=>r.Usuarios);
+  // RF-026: roles responsables con propuestas sin revisar en su nivel.
+  const pend=(rol)=>rol==='jefe_departamento'?PROPUESTAS.filter(p=>p.estado==='pendiente_departamento'&&p.dpto==='Biología').length
+    :rol==='jefe_area'?PROPUESTAS.filter(p=>p.estado==='pendiente_area'&&p.area==='Facultad de Agronomía').length
+    :rol==='jefe_comision'?PROPUESTAS.filter(p=>p.estado==='en_comision').length
+    :rol==='miembro_comision'?PROPUESTAS.filter(p=>p.revs.some(r=>r.m===ROLES.miembro_comision.nombre&&!r.hecha)).length:0;
+  const inact=USUARIOS.filter(u=>u[1]!=='usuario'&&pend(u[1])>0);
   return `
-  <div class="ph"><div><h2>Dashboard estadístico</h2><div class="s">Proceso de premiación 2026</div></div></div>
+  <div class="ph"><div><h2>Dashboard estadístico</h2><div class="s">Proceso de premiación 2026 · datos en tiempo real</div></div></div>
   <div class="ca">
     <div class="kg">
       <div class="kc"><div class="kv">${PROPUESTAS.length}</div><div class="kl">Total propuestas</div></div>
       <div class="kc go"><div class="kv">${PROPUESTAS.filter(p=>p.estado==='en_comision').length}</div><div class="kl">En comisión</div></div>
       <div class="kc gr"><div class="kv">${PROPUESTAS.filter(p=>p.estado==='aprobada').length}</div><div class="kl">Aprobadas</div></div>
-      <div class="kc re"><div class="kv">${Object.keys(porArea).length}</div><div class="kl">Áreas participantes</div></div>
+      <div class="kc re"><div class="kv">${AREAS.length-Object.keys(porArea).length}</div><div class="kl">Áreas sin propuestas</div></div>
     </div>
-    <div class="card"><div class="ch"><h3>Propuestas por área</h3></div><div class="cb">
-      ${Object.entries(porArea).map(([a,n])=>`<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;font-size:.82rem"><div style="width:180px;text-align:right;color:var(--muted)">${esc(a)}</div><div style="flex:1;background:var(--border);border-radius:4px;height:18px"><div style="width:${n/max*100}%;height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:4px;color:#fff;font-size:.7rem;padding-left:6px;line-height:18px">${n}</div></div></div>`).join('')}
-    </div></div>
+    <div class="g2">
+      <div class="card"><div class="ch"><h3>Propuestas por tipo de premio</h3>${csvBtn('propuestas-por-premio',porPremio,'Premio')}</div><div class="cb">${barras(porPremio)}</div></div>
+      <div class="card"><div class="ch"><h3>Propuestas por área</h3>${csvBtn('propuestas-por-area',porArea,'Área')}</div><div class="cb">${barras(porArea)}</div></div>
+    </div>
+    <div class="g2" style="margin-top:16px">
+      <div class="card"><div class="ch"><h3>Estado del proceso por área</h3><button class="btn-s" style="margin-left:auto" onclick='exportarCSV("estado-por-area",${JSON.stringify(enviaron)})'>⬇ CSV</button></div><div class="cb">
+        ${enviaron.map(a=>`<div style="display:flex;justify-content:space-between;font-size:.84rem;margin-bottom:8px"><span>${esc(a.Área)}</span>${a['Envió propuestas']==='Sí'?'<span class="bg b-gr">Envió ('+a.Propuestas+')</span>':'<span class="bg b-re">No envió</span>'}</div>`).join('')}</div></div>
+      <div class="card"><div class="ch"><h3>Participación por rol</h3><button class="btn-s" style="margin-left:auto" onclick='exportarCSV("participacion-roles",${JSON.stringify(roles)})'>⬇ CSV</button></div>
+        <table><thead><tr><th>Rol</th><th>Usuarios</th><th>Con propuestas</th></tr></thead><tbody>${roles.map(r=>`<tr><td>${r.Rol}</td><td>${r.Usuarios}</td><td>${r['Con propuestas']}</td></tr>`).join('')}</tbody></table></div>
+    </div>
+    ${can('gestor_global')?`<div class="card" style="margin-top:16px"><div class="ch"><h3>⚠️ Control de usuarios inactivos</h3></div>
+      <table><thead><tr><th>Usuario</th><th>Rol</th><th>Propuestas sin revisar</th></tr></thead><tbody>
+      ${inact.map(u=>`<tr><td><b>${esc(u[0])}</b></td><td>${ROLES[u[1]].label}</td><td><span class="bg b-re">${pend(u[1])}</span></td></tr>`).join('')||'<tr><td colspan="3" style="color:var(--muted)">Todos los responsables están al día.</td></tr>'}
+      </tbody></table></div>`:''}
   </div>`},
 };
 
@@ -429,22 +510,86 @@ function confirmarGanador(id){const p=PROPUESTAS.find(x=>x.id===id);
   p.estado='ganadora_propuesta';p.seleccion=$('selG').value;hist(p,'Propuesta de ganador');closeModal();toast('Enviada a aprobación final');renderApp()}
 function aprobar(id){const p=PROPUESTAS.find(x=>x.id===id);p.estado='aprobada';hist(p,'Aprobación final');toast('Ganador aprobado y publicado');renderApp()}
 function rechazar(id){const p=PROPUESTAS.find(x=>x.id===id);p.estado='rechazada';hist(p,'Rechazo');toast('Propuesta rechazada');renderApp()}
-function cambiarRol(i){const u=USUARIOS[i];
+// RF-008: nadie cambia su propio rol y solo el superadmin asigna o retira los roles Admin/Superadmin.
+const esRolAdmin=(r)=>r==='admin'||r==='superadmin';
+function puedeEditarRol(i){const u=USUARIOS[i];return u[0]!==ROLES[state.rol].nombre&&(state.rol==='superadmin'||!esRolAdmin(u[1]))}
+function cambiarRol(i){const u=USUARIOS[i];if(!puedeEditarRol(i)){toast('No tienes permiso para cambiar este rol');return}
   modal(`<div class="ch"><h3>Editar rol: ${esc(u[0])}</h3><button class="btn-s" style="margin-left:auto" onclick="closeModal()">✕</button></div>
-  <div class="cb"><div class="fg"><label>Rol</label><select class="fc" id="rolSel">${RANK.map(r=>`<option value="${r}" ${r===u[1]?'selected':''}>${ROLES[r].label}</option>`).join('')}</select></div>
+  <div class="cb"><div class="fg"><label>Rol</label><select class="fc" id="rolSel">${RANK.filter(r=>state.rol==='superadmin'||!esRolAdmin(r)).map(r=>`<option value="${r}" ${r===u[1]?'selected':''}>${ROLES[r].label}</option>`).join('')}</select></div>
   <button class="btn btn-block" onclick="guardarRol(${i})">Guardar</button></div>`)}
-function guardarRol(i){USUARIOS[i][1]=$('rolSel').value;closeModal();toast('Rol actualizado');renderApp()}
+function guardarRol(i){if(!puedeEditarRol(i)||(esRolAdmin($('rolSel').value)&&state.rol!=='superadmin')){toast('No tienes permiso para asignar ese rol');return}USUARIOS[i][1]=$('rolSel').value;closeModal();toast('Rol actualizado');renderApp()}
 function openNueva(){
+  if(state.rol==='usuario'&&!convocatoriaActiva()){toast('No hay una convocatoria activa para subir propuestas');return}
   modal(`<div class="ch"><h3>Nueva propuesta</h3><button class="btn-s" style="margin-left:auto" onclick="closeModal()">✕</button></div>
   <div class="cb"><div class="fg"><label>Premio</label><select class="fc" id="nPremio">${PREMIOS.map(p=>`<option value="${p.id}">${esc(p.nombre)}</option>`).join('')}</select></div>
   <div class="fg"><label>Candidato</label><input class="fc" id="nCand" value="${esc(ROLES[state.rol].nombre)}"></div>
   <div class="fg"><label>Resumen</label><textarea class="fc" id="nRes" rows="3"></textarea></div>
+  <div class="fg"><label>Documento de fundamentación (PDF, DOC, DOCX, ODT · máx. 10 MB)</label><input class="fc" type="file" id="nDoc" accept=".pdf,.doc,.docx,.odt"></div>
   <button class="btn btn-block" onclick="crearPropuesta()">📤 Enviar propuesta</button></div>`)}
 function crearPropuesta(){
   const cand=$('nCand').value.trim(),res=$('nRes').value.trim();
   if(!cand||!res){toast('Completa candidato y resumen');return}
+  const f=$('nDoc').files[0],err=validarDoc(f);if(err){toast(err);return}
   const p={id:nextId++,cand,premio:+$('nPremio').value,area:'Facultad de Informática',dpto:'Ingeniería de Software',creador:ROLES[state.rol].nombre,estado:'pendiente_departamento',nivel:'departamento',comision:null,resumen:res,historial:[]};
+  initProp(p);p.versiones[0].f=new Date().toISOString().slice(0,16).replace('T',' ');p.versiones[0].doc=f?f.name:'';
   hist(p,'Creación de propuesta');PROPUESTAS.unshift(p);closeModal();toast('Propuesta enviada');renderApp()}
+function editarProp(id){const p=PROPUESTAS.find(x=>x.id===id);
+  modal(`<div class="ch"><h3>Modificar propuesta (v${p.version} → v${p.version+1})</h3><button class="btn-s" style="margin-left:auto" onclick="closeModal()">✕</button></div>
+  <div class="cb"><div class="fg"><label>Candidato</label><input class="fc" id="eCand" value="${esc(p.cand)}"></div>
+  <div class="fg"><label>Descripción / fundamentación</label><textarea class="fc" id="eRes" rows="4">${esc(p.resumen)}</textarea></div>
+  <div class="fg"><label>Reemplazar documento (opcional · PDF, DOC, DOCX, ODT · máx. 10 MB)</label><input class="fc" type="file" id="eDoc" accept=".pdf,.doc,.docx,.odt"></div>
+  <button class="btn btn-block" onclick="guardarEdicion(${id})">Guardar cambios</button></div>`)}
+function guardarEdicion(id){const p=PROPUESTAS.find(x=>x.id===id);
+  const cand=$('eCand').value.trim(),res=$('eRes').value.trim(),f=$('eDoc').files[0],err=validarDoc(f);
+  if(err){toast(err);return}
+  if(!cand||!res){toast('Completa candidato y descripción');return}
+  if(cand===p.cand&&res===p.resumen&&!f){closeModal();toast('Sin cambios: no se crea una nueva versión');return}
+  p.cand=cand;p.resumen=res;p.version++;
+  p.versiones.push({v:p.version,u:ROLES[state.rol].nombre,f:new Date().toISOString().slice(0,16).replace('T',' '),cand,doc:f?f.name:''});
+  hist(p,'Modificación (versión '+p.version+')');closeModal();toast('Propuesta actualizada a la versión '+p.version);renderApp()}
+function asignarRev(id){const p=PROPUESTAS.find(x=>x.id===id),m=$('selMiembro').value;
+  if(!m){toast('Selecciona un miembro de la comisión');return}
+  p.revs.push({m,hecha:false,crit:'',punt:null});hist(p,'Asignar revisión a '+m);toast('Revisión asignada a '+m);renderApp()}
+function registrarRev(id){const p=PROPUESTAS.find(x=>x.id===id),r=p.revs.find(x=>x.m===ROLES[state.rol].nombre);
+  const crit=$('revCrit').value.trim(),punt=+$('revPunt').value||null;
+  if(!crit){toast('Debes escribir tu criterio');return}
+  if(punt&&(punt<1||punt>10)){toast('La puntuación debe estar entre 1 y 10');return}
+  r.crit=crit;r.punt=punt;r.hecha=true;hist(p,'Revisión de comisión');toast('Revisión registrada');renderApp()}
+function toggleConv(){const e=ETAPAS.find(x=>x.conv);e.estado=e.estado==='en_curso'?'finalizada':'en_curso';
+  toast(e.estado==='en_curso'?'Convocatoria abierta: los usuarios pueden proponer':'Convocatoria cerrada');renderApp()}
+function importarAreas(inp){const f=inp.files[0];inp.value='';if(!f)return;const msg=$('importMsg');
+  const fallo=(t)=>{msg.innerHTML=`<div class="al">⚠️ ${esc(t)}</div>`};
+  const n=f.name.toLowerCase();
+  if(!n.endsWith('.xlsx')&&!n.endsWith('.csv')){fallo('Formato no soportado. Use un archivo .xlsx o .csv.');return}
+  if(n.endsWith('.xlsx')){msg.innerHTML='<div class="al" style="background:#EAFAF1;border-color:#A9DFBF;color:#1A7F4B">✅ Estructura validada (columnas «area» y «departamento»). Importación simulada en el preview.</div>';return}
+  const rd=new FileReader();rd.onload=()=>{
+    const filas=String(rd.result).replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean).map(l=>l.split(',').map(c=>c.trim()));
+    const cab=filas.shift().map(c=>c.toLowerCase());
+    if(!cab.includes('area')){fallo('Estructura inválida: la primera fila debe tener las columnas «area» y «departamento».');return}
+    const ia=cab.indexOf('area'),id=cab.indexOf('departamento'),errores=[];
+    filas.forEach((r,k)=>{if(!r[ia]&&r[id])errores.push('Fila '+(k+2)+': el departamento «'+r[id]+'» no tiene área.')});
+    if(errores.length){fallo('El archivo tiene errores; no se importó nada. '+errores.join(' '));return}
+    let na=0,nd=0;filas.forEach(r=>{if(!r[ia])return;let a=AREAS.find(x=>x.n===r[ia]);if(!a){a={n:r[ia],deptos:[],usuarios:0};AREAS.push(a);na++}
+      if(id>=0&&r[id]&&!a.deptos.includes(r[id])){a.deptos.push(r[id]);nd++}});
+    renderApp();$('importMsg').innerHTML=`<div class="al" style="background:#EAFAF1;border-color:#A9DFBF;color:#1A7F4B">✅ Importación correcta: ${na} áreas y ${nd} departamentos nuevos.</div>`};
+  rd.readAsText(f)}
+function eliminarArea(i){const a=AREAS[i];
+  const aviso=(a.usuarios||a.deptos.length)?`<div class="al">⚠️ El área «${esc(a.n)}» tiene <b>${a.usuarios}</b> usuario(s) y <b>${a.deptos.length}</b> departamento(s) asociados. Si la elimina, los departamentos se borrarán y los usuarios quedarán sin área.</div>`:'';
+  modal(`<div class="ch"><h3>Eliminar área</h3><button class="btn-s" style="margin-left:auto" onclick="closeModal()">✕</button></div>
+  <div class="cb">${aviso}<p style="font-size:.88rem;margin-bottom:14px">¿Eliminar «${esc(a.n)}»? Esta acción no se puede deshacer.</p>
+  <button class="btn-d btn-block" onclick="AREAS.splice(${i},1);closeModal();toast('Área eliminada');renderApp()">Sí, eliminar</button></div>`)}
+function editarReg(i){const r=i>=0?REGLAMENTO[i]:{t:'',i:'📋',c:'',on:true};
+  modal(`<div class="ch"><h3>${i>=0?'Editar sección':'Nueva sección'}</h3><button class="btn-s" style="margin-left:auto" onclick="closeModal()">✕</button></div>
+  <div class="cb"><div class="fg"><label>Icono</label><input class="fc" id="rI" value="${esc(r.i)}" maxlength="4"></div>
+  <div class="fg"><label>Título</label><input class="fc" id="rT" value="${esc(r.t)}"></div>
+  <div class="fg"><label>Contenido</label><textarea class="fc" id="rC" rows="5">${esc(r.c)}</textarea></div>
+  <div class="fg"><label>Visible</label><select class="fc" id="rO"><option value="1" ${r.on?'selected':''}>Publicada</option><option value="0" ${r.on?'':'selected'}>Oculta</option></select></div>
+  <button class="btn btn-block" onclick="guardarReg(${i})">Guardar</button></div>`)}
+function guardarReg(i){const t=$('rT').value.trim(),c=$('rC').value.trim();
+  if(!t||!c){toast('El título y el contenido son obligatorios');return}
+  const r={t,c,i:$('rI').value||'📋',on:$('rO').value==='1'};
+  if(i>=0)REGLAMENTO[i]=r;else REGLAMENTO.push(r);closeModal();toast('Reglamento actualizado: ya se ve en el landing');renderApp()}
+function eliminarReg(i){REGLAMENTO.splice(i,1);toast('Sección eliminada');renderApp()}
 function modal(html){$('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-box">${html}</div></div>`}
 function closeModal(){$('modalRoot').innerHTML=''}
 
@@ -455,6 +600,9 @@ function renderApp(){
   $('view').innerHTML=v();
 }
 function renderLanding(){
+  const conv=convocatoriaActiva();
+  $('heroBadge').style.display=conv?'inline-block':'none';$('heroBtn').style.display=conv?'':'none';$('navProponer').style.display=conv?'':'none';
+  $('landingReg').innerHTML=REGLAMENTO.filter(r=>r.on).map(r=>`<div class="card"><div class="cb"><div style="font-size:1.4rem">${esc(r.i)}</div><b style="color:var(--blue)">${esc(r.t)}</b><p style="color:var(--muted);font-size:.84rem;margin-top:6px;white-space:pre-line">${esc(r.c)}</p></div></div>`).join('')||'<p style="color:var(--muted)">El reglamento aún no ha sido publicado.</p>';
   $('landingCats').innerHTML=[...new Set(PREMIOS.map(p=>p.cat))].map(c=>`<div class="ccard"><b style="color:var(--blue)">${esc(c)}</b><ul style="list-style:none;padding:0;margin-top:8px">${PREMIOS.filter(p=>p.cat===c).map(p=>`<li style="font-size:.84rem;margin:6px 0 0 0">▪ ${esc(p.nombre)}</li>`).join('')}</ul></div>`).join('');
   $('landingCal').innerHTML=ETAPAS.map(e=>`<div class="tli ${e.estado==='en_curso'?'act':e.estado==='finalizada'?'done':''}"><b style="font-size:.84rem">${esc(e.n)}</b><div style="font-size:.76rem;color:var(--muted);margin-top:4px">${e.fin}</div><div style="font-size:.72rem;font-weight:700;margin-top:6px">${e.estado==='en_curso'?'▶ En curso':'Próxima'}</div></div>`).join('');
   $('landingWin').innerHTML=GANADORES.map(g=>`<div class="card"><div class="cb" style="text-align:center"><div style="width:58px;height:58px;border-radius:50%;background:var(--light);color:var(--blue);border:3px solid var(--gold);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-weight:700">${esc(g.n.split(' ').slice(0,2).map(w=>w[0]).join(''))}</div><b>${esc(g.n)}</b><div style="font-size:.78rem;color:var(--muted)">${esc(g.area)}</div><div style="margin-top:8px;font-size:.72rem;background:var(--gold-lt);color:var(--warn);display:inline-block;padding:3px 10px;border-radius:10px">🏆 ${esc(g.p)}</div></div></div>`).join('');

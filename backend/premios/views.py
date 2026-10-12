@@ -6,9 +6,10 @@ from rest_framework.response import Response
 
 from auditoria.utils import registrar
 from usuarios.permissions import IsAdmin
-from .models import CategoriaPremio, EtapaProceso, Premio
+from .models import CategoriaPremio, EtapaProceso, Premio, ReglamentoSeccion, convocatoria_activa
 from .serializers import (
     CategoriaPremioPublicaSerializer, CategoriaPremioSerializer, EtapaProcesoSerializer, PremioSerializer,
+    ReglamentoSeccionSerializer,
 )
 
 
@@ -101,8 +102,36 @@ def publico_calendario_view(request):
 @permission_classes([AllowAny])
 def publico_convocatoria_activa_view(request):
     """RF-005: indica si hay una etapa de convocatoria (subida de propuestas) activa."""
-    hoy = timezone.now().date()
-    activa = EtapaProceso.objects.filter(
-        fecha_inicio__lte=hoy, fecha_cierre__gte=hoy, nombre__icontains='convocatoria'
-    ).exists()
-    return Response({'convocatoria_activa': activa})
+    return Response({'convocatoria_activa': convocatoria_activa()})
+
+
+class ReglamentoSeccionViewSet(viewsets.ModelViewSet):
+    """RF-001: el administrador edita el contenido del reglamento."""
+    queryset = ReglamentoSeccion.objects.all()
+    serializer_class = ReglamentoSeccionSerializer
+    pagination_class = None
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [IsAuthenticated()]
+        return [IsAdmin()]
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        registrar(self.request.user, 'Crear sección del reglamento', 'premios', instance.titulo, self.request)
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        registrar(self.request.user, 'Editar sección del reglamento', 'premios', instance.titulo, self.request)
+
+    def perform_destroy(self, instance):
+        registrar(self.request.user, 'Eliminar sección del reglamento', 'premios', instance.titulo, self.request)
+        instance.delete()
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def publico_reglamento_view(request):
+    """RF-001: secciones activas del reglamento para el landing page."""
+    qs = ReglamentoSeccion.objects.filter(activo=True)
+    return Response(ReglamentoSeccionSerializer(qs, many=True).data)
